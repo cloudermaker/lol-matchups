@@ -22,4 +22,5 @@ h1 a { color: inherit; text-decoration: none; }
 .items { display: flex; gap: 6px; flex-wrap: wrap; }
 .items img { border-radius: 4px; }
 .muted { color: var(--muted); }
+footer { margin-top: 32px; font-size: 0.8em; text-align: right; }
 .error { color: var(--bad); }

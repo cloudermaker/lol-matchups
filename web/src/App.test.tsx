@@ -117,6 +117,12 @@ describe('App', () => {
     expect(screen.getByText('Top 5 counters — Bbb top')).toBeInTheDocument();
   });
 
+  it('shows the app version', async () => {
+    render(<App />);
+    await flush();
+    expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
+  });
+
   it('shows the lane homepage with best and lowest win rates', async () => {
     render(<App />);
     await flush();

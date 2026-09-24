@@ -109,6 +109,7 @@ export function App() {
           {vs && vsBuild !== undefined && <BuildPanel title={`vs ${vsName}`} build={vsBuild} />}
         </div>
       )}
+      <footer className="muted">v{__APP_VERSION__}</footer>
     </main>
   );
 }
