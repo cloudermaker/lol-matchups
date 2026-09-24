@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Build, Item } from '@lol/shared';
 
 const Items = ({ items }: { items: Item[] }) => (
@@ -6,7 +7,7 @@ const Items = ({ items }: { items: Item[] }) => (
   </div>
 );
 
-export function BuildPanel({ title, build }: { title: string; build: Build | null }) {
+export function BuildPanel({ title, build, children }: { title: string; build: Build | null; children?: ReactNode }) {
   return (
     <section className="build">
       <h2>{title}</h2>
@@ -20,6 +21,7 @@ export function BuildPanel({ title, build }: { title: string; build: Build | nul
           <h3>Boots</h3>{build.boots ? <Items items={[build.boots]} /> : <p className="muted">No data</p>}
         </>
       )}
+      {children}
     </section>
   );
 }

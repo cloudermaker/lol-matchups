@@ -117,6 +117,15 @@ describe('App', () => {
     expect(screen.getByText('Top 5 counters — Bbb top')).toBeInTheDocument();
   });
 
+  it('links to the lolalytics build page for runes and summoner spells', async () => {
+    window.history.replaceState(null, '', '/?champ=MonkeyKing&lane=jungle');
+    render(<App />);
+    await flush();
+    expect(screen.getByRole('link', { name: /Runes & summoner spells on lolalytics/ })).toHaveAttribute(
+      'href', 'https://lolalytics.com/lol/wukong/build/?lane=jungle&tier=platinum_plus&region=euw',
+    );
+  });
+
   it('shows the app version', async () => {
     render(<App />);
     await flush();

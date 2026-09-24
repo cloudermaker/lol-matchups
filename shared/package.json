@@ -1,1 +1,1 @@
-{ "name": "@lol/shared", "private": true, "type": "module", "main": "src/types.ts", "types": "src/types.ts" }
+{ "name": "@lol/shared", "private": true, "type": "module", "main": "src/index.ts", "types": "src/index.ts" }

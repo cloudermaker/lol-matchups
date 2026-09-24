@@ -16,6 +16,8 @@ input, button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1p
 .open { padding: 8px 12px; cursor: pointer; }
 .counter.static { cursor: default; border: 1px solid var(--muted); border-radius: 6px; padding: 8px 12px; background: var(--card); }
 h1 a { color: inherit; text-decoration: none; }
+.ext { margin-top: 16px; }
+.ext a { color: var(--accent); }
 .counter img { grid-row: span 2; border-radius: 4px; }
 .wr { color: var(--bad); font-weight: 600; }
 .best .wr { color: var(--good); }

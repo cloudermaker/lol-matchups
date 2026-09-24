@@ -15,4 +15,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: select a counter to show its matchup panel
 - feat: page kept in the URL (bookmark, reload, browser back)
 - feat: app version shown in the footer
+- feat: link to lolalytics for runes and summoner spells
 - chore: `npm run dev` starts API and site together

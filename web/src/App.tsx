@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { LANES, type Build, type Champion, type Lane, type MatchupResponse, type TierListResponse } from '@lol/shared';
+import { LANES, lolalyticsBuildUrl, type Build, type Champion, type Lane, type MatchupResponse, type TierListResponse } from '@lol/shared';
 import { fetchBuild, fetchChampions, fetchMatchup, fetchTierList } from './api';
 import { ChampionPicker } from './components/ChampionPicker';
 import { LanePicker } from './components/LanePicker';
@@ -105,7 +105,13 @@ export function App() {
               onOpen={(id) => navigate(id, result.lane)}
             />
           </section>
-          <BuildPanel title="Recommended build" build={result.build} />
+          <BuildPanel title="Recommended build" build={result.build}>
+            <p className="ext">
+              <a href={lolalyticsBuildUrl(result.champion.id, result.lane)} target="_blank" rel="noreferrer">
+                Runes &amp; summoner spells on lolalytics ↗
+              </a>
+            </p>
+          </BuildPanel>
           {vs && vsBuild !== undefined && <BuildPanel title={`vs ${vsName}`} build={vsBuild} />}
         </div>
       )}

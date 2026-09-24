@@ -1,15 +1,12 @@
-import type { Lane } from '@lol/shared';
+import { lolalyticsSlug, type Lane } from '@lol/shared';
 import type { FetchJson } from '../http';
 import { ProviderError, type Provider, type RawBuild, type RawCounter, type RawTierEntry } from './types';
 
 const BASE = 'https://a1.lolalytics.com/mega/';
-const SLUG_OVERRIDES: Record<string, string> = { MonkeyKing: 'wukong' };
 
 type SetEntry = [ids: string, games: number, wins: number];
 
-export function lolalyticsSlug(id: string): string {
-  return SLUG_OVERRIDES[id] ?? id.toLowerCase();
-}
+export { lolalyticsSlug };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
