@@ -12,18 +12,16 @@ const catalog: Catalog = {
 };
 const darius = champ(122, 'Darius');
 
+// 12 known counters (win rate 40..51) plus noise
+const counters = [
+  ...Array.from({ length: 12 }, (_, i) => ({ championKey: i + 1, winRate: 40 + i, games: 1000 + i })),
+  { championKey: 50, winRate: 30, games: 999 },   // below minGames
+  { championKey: 999, winRate: 20, games: 9000 }, // unknown to catalog
+];
+
 function provider(overrides: Partial<Provider> = {}): Provider {
   return {
-    getCounters: vi.fn().mockResolvedValue([
-      { championKey: 1, winRate: 48, games: 5000 },
-      { championKey: 2, winRate: 40, games: 50 },    // below minGames
-      { championKey: 3, winRate: 45, games: 1000 },  // exactly minGames: kept
-      { championKey: 4, winRate: 52, games: 8000 },
-      { championKey: 5, winRate: 47, games: 3000 },
-      { championKey: 6, winRate: 49, games: 2000 },
-      { championKey: 7, winRate: 46, games: 4000 },
-      { championKey: 999, winRate: 30, games: 9000 }, // unknown to catalog
-    ]),
+    getCounters: vi.fn().mockResolvedValue(counters),
     getBuild: vi.fn().mockResolvedValue({
       early: ['1055'], core: ['3142', '3742', '6333'], bootsCandidates: ['3142', '3047'], games: 5062, winRate: 57.65,
     }),
@@ -37,25 +35,28 @@ function provider(overrides: Partial<Provider> = {}): Provider {
       { championKey: 8, winRate: 38, games: 4000, laneShare: 9.9 },  // off-role
       { championKey: 999, winRate: 70, games: 9000, laneShare: 90 }, // unknown to catalog
     ]),
+    getMainLanes: vi.fn().mockResolvedValue({ 1: 'top', 2: 'jungle', 999: 'middle' }),
     ...overrides,
   };
 }
 const service = (p: Provider) => new MatchupService(p, catalog, new TtlCache(60_000), 1000);
 
 describe('MatchupService.getMatchup', () => {
-  it('returns 5 lowest win rates above minGames, skipping unknown champions', async () => {
-    const res = await service(provider()).getMatchup(darius, 'top');
-    expect(res.counters.map((c) => c.champion.key)).toEqual([3, 7, 5, 1, 6]);
-    expect(res.counters[0]).toEqual({ champion: champ(3), winRate: 45, games: 1000 });
+  it('returns the 10 lowest win rates above minGames, skipping unknown champions', async () => {
+    const res = await service(provider()).getMatchup(darius, 'top', 'platinum_plus');
+    expect(res.counters.map((c) => c.champion.key)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(res.counters[0]).toEqual({ champion: champ(1), winRate: 40, games: 1000 });
+    expect(res.tier).toBe('platinum_plus');
   });
 
-  it('returns fewer than 5 when not enough data', async () => {
+  it('returns fewer than 10 when not enough data', async () => {
     const p = provider({ getCounters: vi.fn().mockResolvedValue([{ championKey: 1, winRate: 48, games: 5000 }]) });
-    expect((await service(p).getMatchup(darius, 'top')).counters).toHaveLength(1);
+    expect((await service(p).getMatchup(darius, 'top', 'platinum_plus')).counters).toHaveLength(1);
   });
 
-  it('enriches the general build and picks real boots', async () => {
-    const res = await service(provider()).getMatchup(darius, 'top');
+  it('enriches the build, picks real boots and passes the tier', async () => {
+    const p = provider();
+    const res = await service(p).getMatchup(darius, 'top', 'emerald_plus');
     expect(res.build).toEqual({
       early: [{ id: '1055', name: 'I1055', icon: '1055.png' }],
       core: ['3142', '3742', '6333'].map((id) => ({ id, name: `I${id}`, icon: `${id}.png` })),
@@ -63,41 +64,51 @@ describe('MatchupService.getMatchup', () => {
       games: 5062,
       winRate: 57.65,
     });
+    expect(p.getCounters).toHaveBeenCalledWith('Darius', 'top', 'emerald_plus');
+    expect(p.getBuild).toHaveBeenCalledWith('Darius', 'top', 'emerald_plus');
   });
 
-  it('caches per champion+lane', async () => {
+  it('caches per champion, lane and tier', async () => {
     const p = provider();
     const s = service(p);
-    await s.getMatchup(darius, 'top');
-    await s.getMatchup(darius, 'top');
-    await s.getMatchup(darius, 'jungle');
-    expect(p.getCounters).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe('MatchupService.getBuild', () => {
-  it('passes the opponent id and returns null build when provider has none', async () => {
-    const p = provider({ getBuild: vi.fn().mockResolvedValue(null) });
-    expect(await service(p).getBuild(darius, 'top', champ(54, 'Malphite'))).toEqual({ build: null });
-    expect(p.getBuild).toHaveBeenCalledWith('Darius', 'top', 'Malphite');
+    await s.getMatchup(darius, 'top', 'platinum_plus');
+    await s.getMatchup(darius, 'top', 'platinum_plus');
+    await s.getMatchup(darius, 'jungle', 'platinum_plus');
+    await s.getMatchup(darius, 'top', 'emerald_plus');
+    expect(p.getCounters).toHaveBeenCalledTimes(3);
   });
 });
 
 describe('MatchupService.getTierList', () => {
   it('returns best and worst win rates above minGames, skipping off-role and unknown champions', async () => {
-    const res = await service(provider()).getTierList('top');
-    expect(res.lane).toBe('top');
+    const res = await service(provider()).getTierList('top', 'platinum_plus');
+    expect(res).toMatchObject({ lane: 'top', tier: 'platinum_plus' });
     expect(res.best.map((e) => e.champion.key)).toEqual([4, 1, 5, 6, 3]);
     expect(res.worst.map((e) => e.champion.key)).toEqual([3, 6, 5, 1, 4]);
     expect(res.best[0]).toEqual({ champion: champ(4), winRate: 55, games: 9000 });
   });
 
-  it('caches per lane', async () => {
+  it('caches per lane and tier', async () => {
     const p = provider();
     const s = service(p);
-    await s.getTierList('top');
-    await s.getTierList('top');
-    await s.getTierList('jungle');
-    expect(p.getTierList).toHaveBeenCalledTimes(2);
+    await s.getTierList('top', 'platinum_plus');
+    await s.getTierList('top', 'platinum_plus');
+    await s.getTierList('jungle', 'platinum_plus');
+    await s.getTierList('top', 'emerald_plus');
+    expect(p.getTierList).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('MatchupService.getMainLanes', () => {
+  it('maps champion ids to their main lane, skipping unknown champions', async () => {
+    expect(await service(provider()).getMainLanes()).toEqual({ C1: 'top', C2: 'jungle' });
+  });
+
+  it('caches the result', async () => {
+    const p = provider();
+    const s = service(p);
+    await s.getMainLanes();
+    await s.getMainLanes();
+    expect(p.getMainLanes).toHaveBeenCalledTimes(1);
   });
 });

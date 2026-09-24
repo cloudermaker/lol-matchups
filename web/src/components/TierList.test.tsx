@@ -3,7 +3,7 @@ import type { TierListResponse } from '@lol/shared';
 import { TierList } from './TierList';
 
 const data: TierListResponse = {
-  lane: 'top',
+  lane: 'top', tier: 'platinum_plus',
   best: [{ champion: { id: 'Zilean', key: 26, name: 'Zilean', icon: 'z.png' }, winRate: 55.03, games: 7921 }],
   worst: [{ champion: { id: 'Nilah', key: 895, name: 'Nilah', icon: 'n.png' }, winRate: 40.61, games: 1182 }],
 };
@@ -27,7 +27,7 @@ describe('TierList', () => {
   });
 
   it('shows an empty state', () => {
-    render(<TierList data={{ lane: 'top', best: [], worst: [] }} onOpen={() => {}} />);
+    render(<TierList data={{ lane: 'top', tier: 'platinum_plus', best: [], worst: [] }} onOpen={() => {}} />);
     expect(screen.getAllByText('No champions with enough games')).toHaveLength(2);
   });
 });

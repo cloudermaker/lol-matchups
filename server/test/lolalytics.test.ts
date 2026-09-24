@@ -8,17 +8,19 @@ const byEp: Record<string, unknown> = {
   counter: fixture('counter-darius-top.json'),
   'build-itemset': fixture('itemset-darius-top.json'),
   'build-earlyset': fixture('earlyset-darius-top.json'),
-  list: fixture('list-top.json'),
 };
+const lists: Record<string, unknown> = { top: fixture('list-top.json'), all: fixture('list-all.json') };
 
 function recordingFetch(body?: unknown) {
   const urls: string[] = [];
   const fn = async (url: string) => {
     urls.push(url);
-    return body ?? byEp[new URL(url).searchParams.get('ep')!];
+    const q = new URL(url).searchParams;
+    return body ?? (q.get('ep') === 'list' ? lists[q.get('lane')!] : byEp[q.get('ep')!]);
   };
   return { fn, urls };
 }
+const params = (url: string) => Object.fromEntries(new URL(url).searchParams);
 
 describe('lolalyticsSlug', () => {
   it('lower-cases ids and maps Wukong', () => {
@@ -30,33 +32,33 @@ describe('lolalyticsSlug', () => {
 });
 
 describe('LolalyticsProvider', () => {
-  it('builds the EUW Platinum+ counter URL', async () => {
+  it('builds the EUW counter URL with the requested tier', async () => {
     const { fn, urls } = recordingFetch();
-    await new LolalyticsProvider(fn).getCounters('MonkeyKing', 'top');
-    const q = new URL(urls[0]).searchParams;
-    expect(Object.fromEntries(q)).toMatchObject({
-      ep: 'counter', c: 'wukong', lane: 'top', tier: 'platinum_plus', queue: 'ranked', region: 'euw',
+    await new LolalyticsProvider(fn).getCounters('MonkeyKing', 'top', 'emerald_plus');
+    expect(params(urls[0])).toMatchObject({
+      ep: 'counter', c: 'wukong', lane: 'top', tier: 'emerald_plus', queue: 'ranked', region: 'euw',
     });
   });
 
   it('normalises counters', async () => {
-    const counters = await new LolalyticsProvider(recordingFetch().fn).getCounters('Darius', 'top');
+    const counters = await new LolalyticsProvider(recordingFetch().fn).getCounters('Darius', 'top', 'platinum_plus');
     expect(counters).toHaveLength(127);
     expect(counters).toContainEqual({ championKey: 62, winRate: 46.18, games: 2984 });
   });
 
   it('throws ProviderError on {"status":404}', async () => {
     const p = new LolalyticsProvider(recordingFetch({ status: 404 }).fn);
-    await expect(p.getCounters('Zzz', 'top')).rejects.toBeInstanceOf(ProviderError);
+    await expect(p.getCounters('Zzz', 'top', 'platinum_plus')).rejects.toBeInstanceOf(ProviderError);
   });
 
   it('throws ProviderError on network failure', async () => {
     const p = new LolalyticsProvider(async () => { throw new Error('ECONNRESET'); });
-    await expect(p.getCounters('Darius', 'top')).rejects.toBeInstanceOf(ProviderError);
+    await expect(p.getCounters('Darius', 'top', 'platinum_plus')).rejects.toBeInstanceOf(ProviderError);
   });
 
-  it('normalises the general build', async () => {
-    const build = await new LolalyticsProvider(recordingFetch().fn).getBuild('Darius', 'top');
+  it('normalises the build and passes the tier', async () => {
+    const { fn, urls } = recordingFetch();
+    const build = await new LolalyticsProvider(fn).getBuild('Darius', 'top', 'emerald_plus');
     expect(build).toEqual({
       early: ['1055', '1001', '1029', '1036', '3047'],
       core: ['3142', '3742', '6333'],
@@ -65,18 +67,13 @@ describe('LolalyticsProvider', () => {
       winRate: 57.65,
     });
     expect(build!.bootsCandidates.slice(0, 2)).toEqual(['3047', '3142']);
-  });
-
-  it('returns null for matchup builds (no endpoint yet)', async () => {
-    const { fn, urls } = recordingFetch();
-    expect(await new LolalyticsProvider(fn).getBuild('Darius', 'top', 'Malphite')).toBeNull();
-    expect(urls).toHaveLength(0);
+    expect(urls.map((u) => params(u).tier)).toEqual(['emerald_plus', 'emerald_plus']);
   });
 
   it('normalises the lane tier list', async () => {
     const { fn, urls } = recordingFetch();
-    const list = await new LolalyticsProvider(fn).getTierList('top');
-    const q = Object.fromEntries(new URL(urls[0]).searchParams);
+    const list = await new LolalyticsProvider(fn).getTierList('top', 'platinum_plus');
+    const q = params(urls[0]);
     expect(q).toMatchObject({ ep: 'list', lane: 'top', tier: 'platinum_plus', region: 'euw' });
     expect(q.c).toBeUndefined();
     expect(list).toHaveLength(173);
@@ -85,6 +82,15 @@ describe('LolalyticsProvider', () => {
 
   it('throws ProviderError on an unexpected tier list shape', async () => {
     const p = new LolalyticsProvider(recordingFetch({ fields: [] }).fn);
-    await expect(p.getTierList('top')).rejects.toBeInstanceOf(ProviderError);
+    await expect(p.getTierList('top', 'platinum_plus')).rejects.toBeInstanceOf(ProviderError);
+  });
+
+  it('reads each champion main lane from the all-lanes list', async () => {
+    const { fn, urls } = recordingFetch();
+    const lanes = await new LolalyticsProvider(fn).getMainLanes();
+    expect(params(urls[0])).toMatchObject({ ep: 'list', lane: 'all', tier: 'platinum_plus', region: 'euw' });
+    expect(lanes[122]).toBe('top');
+    expect(lanes[64]).toBe('jungle');
+    expect(Object.keys(lanes)).toHaveLength(173);
   });
 });

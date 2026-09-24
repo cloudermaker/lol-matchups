@@ -1,4 +1,4 @@
-import type { Lane } from './types';
+import type { Lane, Tier } from './types';
 
 const SLUG_OVERRIDES: Record<string, string> = { MonkeyKing: 'wukong' };
 
@@ -7,6 +7,6 @@ export function lolalyticsSlug(id: string): string {
   return SLUG_OVERRIDES[id] ?? id.toLowerCase();
 }
 
-export function lolalyticsBuildUrl(id: string, lane: Lane): string {
-  return `https://lolalytics.com/lol/${lolalyticsSlug(id)}/build/?${new URLSearchParams({ lane, tier: 'platinum_plus', region: 'euw' })}`;
+export function lolalyticsBuildUrl(id: string, lane: Lane, tier: Tier): string {
+  return `https://lolalytics.com/lol/${lolalyticsSlug(id)}/build/?${new URLSearchParams({ lane, tier, region: 'euw' })}`;
 }

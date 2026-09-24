@@ -1,11 +1,11 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { LANES, type Champion, type Lane } from '@lol/shared';
+import { DEFAULT_TIER, LANES, TIERS, type Champion, type Lane, type Tier } from '@lol/shared';
 import type { MatchupService } from './matchup';
 import { ProviderError } from './providers/types';
 
 export interface AppDeps {
   champions: { champions(): Champion[]; championById(id: string): Champion | undefined };
-  matchups: Pick<MatchupService, 'getMatchup' | 'getBuild' | 'getTierList'>;
+  matchups: Pick<MatchupService, 'getMatchup' | 'getTierList' | 'getMainLanes'>;
 }
 
 class BadRequest extends Error {}
@@ -22,23 +22,25 @@ export function createApp({ champions, matchups }: AppDeps) {
     if (!LANES.includes(value as Lane)) throw new BadRequest(`Invalid lane: ${value ?? ''}`);
     return value as Lane;
   };
+  const tier = (value: unknown): Tier => {
+    if (value === undefined || value === '') return DEFAULT_TIER;
+    if (!TIERS.includes(value as Tier)) throw new BadRequest(`Invalid tier: ${value}`);
+    return value as Tier;
+  };
 
   app.get('/api/champions', (_req, res) => { res.json(champions.champions()); });
 
+  app.get('/api/main-lanes', async (_req, res) => { res.json(await matchups.getMainLanes()); });
+
   app.get('/api/matchup', async (req, res) => {
     const c = champion(req.query.champ);
-    res.json(await matchups.getMatchup(c, lane(req.query.lane)));
-  });
-
-  app.get('/api/build', async (req, res) => {
-    const c = champion(req.query.champ);
     const l = lane(req.query.lane);
-    const vs = req.query.vs ? champion(req.query.vs) : undefined;
-    res.json(await matchups.getBuild(c, l, vs));
+    res.json(await matchups.getMatchup(c, l, tier(req.query.tier)));
   });
 
   app.get('/api/tierlist', async (req, res) => {
-    res.json(await matchups.getTierList(lane(req.query.lane)));
+    const l = lane(req.query.lane);
+    res.json(await matchups.getTierList(l, tier(req.query.tier)));
   });
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

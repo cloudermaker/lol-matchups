@@ -1,4 +1,4 @@
-import type { BuildResponse, Champion, Lane, MatchupResponse, TierListResponse } from '@lol/shared';
+import type { Champion, Lane, MainLanesResponse, MatchupResponse, Tier, TierListResponse } from '@lol/shared';
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -8,8 +8,8 @@ async function get<T>(url: string): Promise<T> {
 }
 
 export const fetchChampions = () => get<Champion[]>('/api/champions');
-export const fetchTierList = (lane: Lane) => get<TierListResponse>(`/api/tierlist?${new URLSearchParams({ lane })}`);
-export const fetchMatchup = (champ: string, lane: Lane) =>
-  get<MatchupResponse>(`/api/matchup?${new URLSearchParams({ champ, lane })}`);
-export const fetchBuild = (champ: string, lane: Lane, vs: string) =>
-  get<BuildResponse>(`/api/build?${new URLSearchParams({ champ, lane, vs })}`);
+export const fetchMainLanes = () => get<MainLanesResponse>('/api/main-lanes');
+export const fetchTierList = (lane: Lane, tier: Tier) =>
+  get<TierListResponse>(`/api/tierlist?${new URLSearchParams({ lane, tier })}`);
+export const fetchMatchup = (champ: string, lane: Lane, tier: Tier) =>
+  get<MatchupResponse>(`/api/matchup?${new URLSearchParams({ champ, lane, tier })}`);

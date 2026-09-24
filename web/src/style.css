@@ -7,14 +7,13 @@ h1 small { font-size: 0.5em; color: var(--muted); }
 .search { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 input, button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--muted); background: var(--card); color: var(--fg); }
 .lanes { display: flex; flex-wrap: wrap; gap: 4px; }
-.lanes button[aria-pressed="true"], .counter.active { border-color: var(--accent); outline: 2px solid var(--accent); }
+.lanes button[aria-pressed="true"] { border-color: var(--accent); outline: 2px solid var(--accent); }
 .results { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 16px; }
 .counters { list-style: none; padding: 0; display: grid; gap: 8px; }
-.counter { width: 100%; display: grid; grid-template-columns: 40px 1fr auto; grid-template-rows: auto auto; gap: 0 12px; text-align: left; cursor: pointer; }
+.counter { width: 100%; display: grid; grid-template-columns: 40px 1fr auto; grid-template-rows: auto auto; gap: 0 12px; text-align: left; border: 1px solid var(--muted); border-radius: 6px; padding: 8px 12px; background: var(--card); }
 .counter-row { display: flex; gap: 6px; }
 .counter-row .counter { flex: 1; }
 .open { padding: 8px 12px; cursor: pointer; }
-.counter.static { cursor: default; border: 1px solid var(--muted); border-radius: 6px; padding: 8px 12px; background: var(--card); }
 h1 a { color: inherit; text-decoration: none; }
 .ext { margin-top: 16px; }
 .ext a { color: var(--accent); }
