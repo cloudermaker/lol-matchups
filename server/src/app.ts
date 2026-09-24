@@ -2,15 +2,19 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { DEFAULT_TIER, LANES, TIERS, type Champion, type Lane, type Tier } from '@lol/shared';
 import type { MatchupService } from './matchup';
 import { ProviderError } from './providers/types';
+import type { ProfileService } from './profile/service';
+import { RiotError } from './riot/client';
 
 export interface AppDeps {
   champions: { champions(): Champion[]; championById(id: string): Champion | undefined };
   matchups: Pick<MatchupService, 'getMatchup' | 'getTierList' | 'getMainLanes'>;
+  profiles: Pick<ProfileService, 'getProfile' | 'findProfile'>;
 }
 
 class BadRequest extends Error {}
+class NotFound extends Error {}
 
-export function createApp({ champions, matchups }: AppDeps) {
+export function createApp({ champions, matchups, profiles }: AppDeps) {
   const app = express();
 
   const champion = (value: unknown): Champion => {
@@ -43,10 +47,32 @@ export function createApp({ champions, matchups }: AppDeps) {
     res.json(await matchups.getTierList(l, tier(req.query.tier)));
   });
 
+  // no tag: tries the default EUW tags
+  app.get('/api/profile/:gameName', async (req, res) => {
+    try {
+      res.json(await profiles.findProfile(req.params.gameName));
+    } catch (e) {
+      if (e instanceof RiotError && e.kind === 'not_found') throw new NotFound(e.message);
+      throw e;
+    }
+  });
+
+  app.get('/api/profile/:gameName/:tagLine', async (req, res) => {
+    const { gameName, tagLine } = req.params;
+    try {
+      res.json(await profiles.getProfile(gameName, tagLine));
+    } catch (e) {
+      if (e instanceof RiotError && e.kind === 'not_found') throw new NotFound(`No EUW account for ${gameName}#${tagLine}`);
+      throw e;
+    }
+  });
+
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     if (err instanceof BadRequest) return void res.status(400).json({ error: err.message });
+    if (err instanceof NotFound) return void res.status(404).json({ error: err.message });
     console.error(err);
-    if (err instanceof ProviderError) return void res.status(502).json({ error: 'Data source unavailable' });
+    if (err instanceof RiotError && err.kind !== 'http') return void res.status(503).json({ error: err.message });
+    if (err instanceof ProviderError || err instanceof RiotError) return void res.status(502).json({ error: 'Data source unavailable' });
     res.status(500).json({ error: 'Internal error' });
   });
 

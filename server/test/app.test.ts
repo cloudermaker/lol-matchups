@@ -1,12 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
-import type { Champion } from '@lol/shared';
+import type { Champion, ProfileResponse } from '@lol/shared';
 import { createApp, type AppDeps } from '../src/app';
 import { ProviderError } from '../src/providers/types';
+import { RiotError } from '../src/riot/client';
 
 const darius: Champion = { id: 'Darius', key: 122, name: 'Darius', icon: 'd.png' };
 const malphite: Champion = { id: 'Malphite', key: 54, name: 'Malphite', icon: 'm.png' };
 const all = [darius, malphite];
+const profile: ProfileResponse = {
+  riotId: 'Mr Noodle#EUW', rank: null, tier: 'gold_plus', games: 0, winRate: 0, mainLane: null, pool: [], advice: [], lolalyticsAvailable: true,
+};
 
 function deps(overrides: Partial<AppDeps['matchups']> = {}): AppDeps {
   return {
@@ -17,6 +21,7 @@ function deps(overrides: Partial<AppDeps['matchups']> = {}): AppDeps {
       getMainLanes: vi.fn().mockResolvedValue({ Darius: 'top' }),
       ...overrides,
     },
+    profiles: { getProfile: vi.fn().mockResolvedValue(profile), findProfile: vi.fn().mockResolvedValue(profile) },
   };
 }
 
@@ -104,5 +109,52 @@ describe('API', () => {
     const res = await request(createApp(deps())).get('/api/main-lanes');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ Darius: 'top' });
+  });
+
+  it('returns a profile, decoding the Riot ID', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/profile/Mr%20Noodle/EUW');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(profile);
+    expect(d.profiles.getProfile).toHaveBeenCalledWith('Mr Noodle', 'EUW');
+  });
+
+  it('finds a profile from a name without a tag', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/profile/Cl%C3%B6uder');
+    expect(res.status).toBe(200);
+    expect(d.profiles.findProfile).toHaveBeenCalledWith('Clöuder');
+  });
+
+  it('404 naming both tags when a name without a tag is not found', async () => {
+    const d = deps();
+    vi.mocked(d.profiles.findProfile).mockRejectedValue(new RiotError('not_found', 'No EUW account for Me#EUW or Me#EUR'));
+    const res = await request(createApp(d)).get('/api/profile/Me');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'No EUW account for Me#EUW or Me#EUR' });
+  });
+
+  it('404 when the Riot ID does not exist', async () => {
+    const d = deps();
+    vi.mocked(d.profiles.getProfile).mockRejectedValue(new RiotError('not_found', 'Not found'));
+    const res = await request(createApp(d)).get('/api/profile/Nobody/EUW');
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'No EUW account for Nobody#EUW' });
+  });
+
+  it('503 with the Riot message on key or busy errors', async () => {
+    const d = deps();
+    vi.mocked(d.profiles.getProfile).mockRejectedValue(new RiotError('key', 'Riot API key missing or expired'));
+    const res = await request(createApp(d)).get('/api/profile/Me/EUW');
+    expect(res.status).toBe(503);
+    expect(res.body).toEqual({ error: 'Riot API key missing or expired' });
+  });
+
+  it('502 on other Riot errors', async () => {
+    const d = deps();
+    vi.mocked(d.profiles.getProfile).mockRejectedValue(new RiotError('http', 'Riot API HTTP 500'));
+    const res = await request(createApp(d)).get('/api/profile/Me/EUW');
+    expect(res.status).toBe(502);
+    expect(res.body).toEqual({ error: 'Data source unavailable' });
   });
 });

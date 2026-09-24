@@ -16,3 +16,16 @@ export interface TierListResponse { lane: Lane; tier: Tier; best: TierEntry[]; w
 // champion id -> main lane
 export type MainLanesResponse = Record<string, Lane>;
 export interface ErrorResponse { error: string }
+export interface StatLine { csPerMin: number; deaths: number; visionPerMin: number; damagePerMin: number; goldPerMin: number }
+// you/opponents are null below 3 games on this champion and lane
+export interface PoolEntry {
+  champion: Champion; lane: Lane; games: number; wins: number; winRate: number; kda: number;
+  you: StatLine | null; opponents: StatLine | null;
+}
+export type AdviceKind = 'best' | 'struggling' | 'offrole' | 'counter' | 'build';
+export interface Advice { kind: AdviceKind; text: string }
+export interface Rank { tier: string; division: string; lp: number }
+export interface ProfileResponse {
+  riotId: string; rank: Rank | null; tier: Tier; games: number; winRate: number; mainLane: Lane | null;
+  pool: PoolEntry[]; advice: Advice[]; lolalyticsAvailable: boolean;
+}

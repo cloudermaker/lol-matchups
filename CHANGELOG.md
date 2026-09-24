@@ -18,4 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: page kept in the URL (bookmark, reload, browser back)
 - feat: app version shown in the footer
 - feat: link to lolalytics for runes and summoner spells
+- feat: player profile from a Riot ID (champion pool, stats vs lane opponents, advice)
+- feat: homepage player search with recent players; a name without a tag tries EUW, then EUR
 - chore: `npm run dev` starts API and site together
+- chore: dev server restarts when `.env` changes

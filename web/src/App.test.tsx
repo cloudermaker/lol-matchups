@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import type { Lane, MatchupResponse, Tier } from '@lol/shared';
+import type { Lane, MatchupResponse, ProfileResponse, Tier } from '@lol/shared';
 import { App } from './App';
 import * as api from './api';
 
@@ -9,6 +9,10 @@ const champ = (id: string) => ({ id, key: id.length, name: id, icon: `${id}.png`
 const matchupFor = (id: string, lane: Lane = 'top', tier: Tier = 'platinum_plus'): MatchupResponse => ({
   champion: champ(id), lane, tier, build: null,
   counters: [champ('Aaa'), champ('Bbb')].map((c) => ({ champion: c, winRate: 45, games: 2000 })),
+});
+
+const profileFor = (riotId: string): ProfileResponse => ({
+  riotId, rank: null, tier: 'gold_plus', games: 0, winRate: 0, mainLane: null, pool: [], advice: [], lolalyticsAvailable: true,
 });
 
 function deferred<T>() {
@@ -21,6 +25,9 @@ const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0))
 const laneButton = (lane: string) => screen.getByRole('button', { name: lane });
 
 beforeEach(() => {
+  vi.clearAllMocks();
+  localStorage.clear();
+  vi.mocked(api.fetchProfile).mockImplementation(async (name, tag) => profileFor(`${name}#${tag}`));
   vi.mocked(api.fetchChampions).mockResolvedValue(['Darius', 'Aaa', 'Bbb', 'LeeSin'].map(champ));
   vi.mocked(api.fetchMainLanes).mockResolvedValue({ Darius: 'top', LeeSin: 'jungle' });
   vi.mocked(api.fetchMatchup).mockImplementation(async (id, lane, tier) => matchupFor(id, lane, tier));
@@ -264,5 +271,116 @@ describe('App', () => {
     render(<App />);
     await flush();
     expect(screen.getByText('Search')).toBeEnabled();
+  });
+
+  it('opens a player page from a Riot ID', async () => {
+    render(<App />);
+    await flush();
+    fireEvent.change(screen.getByLabelText('Player'), { target: { value: 'Mr Noodle#EUW' } });
+    fireEvent.click(screen.getByText('Find player'));
+    await flush();
+    expect(window.location.search).toBe('?player=Mr+Noodle%23EUW');
+    expect(api.fetchProfile).toHaveBeenCalledWith('Mr Noodle', 'EUW');
+    expect(screen.getByRole('heading', { name: 'Mr Noodle#EUW' })).toBeInTheDocument();
+  });
+
+  it('loads a player page from the URL with only the player search', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW');
+    render(<App />);
+    await flush();
+    expect(api.fetchProfile).toHaveBeenCalledWith('Me', 'EUW');
+    expect(screen.getByLabelText('Player')).toHaveValue('Me#EUW');
+    expect(screen.queryByLabelText('Champion')).not.toBeInTheDocument();
+    expect(api.fetchTierList).not.toHaveBeenCalled();
+  });
+
+  it('searches another player from a player page', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW');
+    render(<App />);
+    await flush();
+    fireEvent.change(screen.getByLabelText('Player'), { target: { value: 'Other#EUW' } });
+    fireEvent.click(screen.getByText('Find player'));
+    await flush();
+    expect(api.fetchProfile).toHaveBeenLastCalledWith('Other', 'EUW');
+    expect(screen.getByRole('heading', { name: 'Other#EUW' })).toBeInTheDocument();
+  });
+
+  it('treats a Riot ID in the champion search as a champion name', async () => {
+    render(<App />);
+    await flush();
+    fireEvent.change(screen.getByLabelText('Champion'), { target: { value: 'Name#EUW' } });
+    fireEvent.click(screen.getByText('Search'));
+    await flush();
+    expect(screen.getByText('Unknown champion: Name#EUW')).toBeInTheDocument();
+    expect(api.fetchProfile).not.toHaveBeenCalled();
+  });
+
+  it('hides lane and tier controls on a player page', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW');
+    render(<App />);
+    await flush();
+    expect(screen.queryByRole('group', { name: 'Tier' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'top' })).not.toBeInTheDocument();
+  });
+
+  it('opens a champion from a player page with the profile tier', async () => {
+    vi.mocked(api.fetchProfile).mockResolvedValue({
+      ...profileFor('Me#EUW'), games: 3,
+      pool: [{ champion: champ('Darius'), lane: 'jungle', games: 3, wins: 2, winRate: 67, kda: 2, you: null, opponents: null }],
+    });
+    window.history.replaceState(null, '', '/?player=Me%23EUW');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText('Open Darius page'));
+    await flush();
+    expect(api.fetchMatchup).toHaveBeenCalledWith('Darius', 'jungle', 'gold_plus');
+  });
+
+  it('finds a player without a tag and shows the real Riot ID in the URL', async () => {
+    vi.mocked(api.fetchProfile).mockResolvedValue(profileFor('clöuder#EUR'));
+    render(<App />);
+    await flush();
+    fireEvent.change(screen.getByLabelText('Player'), { target: { value: 'Clöuder' } });
+    fireEvent.click(screen.getByText('Find player'));
+    await flush();
+    expect(api.fetchProfile).toHaveBeenCalledWith('Clöuder');
+    expect(window.location.search).toBe(`?${new URLSearchParams({ player: 'clöuder#EUR' })}`);
+    expect(screen.getByLabelText('Player')).toHaveValue('clöuder#EUR');
+  });
+
+  it('shows an error for an invalid Riot ID in the URL', async () => {
+    window.history.replaceState(null, '', '/?player=Name%23');
+    render(<App />);
+    await flush();
+    expect(screen.getByText('Invalid Riot ID: Name#')).toBeInTheDocument();
+    expect(api.fetchProfile).not.toHaveBeenCalled();
+  });
+
+  it('lists a loaded player as recent on the homepage', async () => {
+    vi.mocked(api.fetchProfile).mockResolvedValue(profileFor('Mr Noodle#EUW'));
+    window.history.replaceState(null, '', '/?player=mr%20noodle%23euw');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByText('LoL Matchups'));
+    await flush();
+    expect(screen.getByRole('button', { name: 'Mr Noodle#EUW' })).toBeInTheDocument();
+  });
+
+  it('does not list a player whose profile failed', async () => {
+    vi.mocked(api.fetchProfile).mockRejectedValue(new Error('No EUW account for Nobody#EUW'));
+    window.history.replaceState(null, '', '/?player=Nobody%23EUW');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByText('LoL Matchups'));
+    await flush();
+    expect(screen.queryByText('Recent')).not.toBeInTheDocument();
+  });
+
+  it('shows the API error for an unknown Riot ID', async () => {
+    vi.mocked(api.fetchProfile).mockRejectedValue(new Error('No EUW account for Nobody#EUW'));
+    window.history.replaceState(null, '', '/?player=Nobody%23EUW');
+    render(<App />);
+    await flush();
+    expect(screen.getByText('No EUW account for Nobody#EUW')).toBeInTheDocument();
   });
 });
