@@ -22,6 +22,7 @@ function deps(overrides: Partial<AppDeps['matchups']> = {}): AppDeps {
       ...overrides,
     },
     profiles: { getProfile: vi.fn().mockResolvedValue(profile), findProfile: vi.fn().mockResolvedValue(profile) },
+    patch: vi.fn().mockResolvedValue({ patch: '26.19', notesUrl: 'https://example.test/notes', imageUrl: null }),
   };
 }
 
@@ -117,6 +118,12 @@ describe('API', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual(profile);
     expect(d.profiles.getProfile).toHaveBeenCalledWith('Mr Noodle', 'EUW');
+  });
+
+  it('returns the current patch', async () => {
+    const res = await request(createApp(deps())).get('/api/patch');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ patch: '26.19', notesUrl: 'https://example.test/notes', imageUrl: null });
   });
 
   it('finds a profile from a name without a tag', async () => {

@@ -1,5 +1,5 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { DEFAULT_TIER, LANES, TIERS, type Champion, type Lane, type Tier } from '@lol/shared';
+import { DEFAULT_TIER, LANES, TIERS, type Champion, type Lane, type PatchResponse, type Tier } from '@lol/shared';
 import type { MatchupService } from './matchup';
 import { ProviderError } from './providers/types';
 import type { ProfileService } from './profile/service';
@@ -9,12 +9,13 @@ export interface AppDeps {
   champions: { champions(): Champion[]; championById(id: string): Champion | undefined };
   matchups: Pick<MatchupService, 'getMatchup' | 'getTierList' | 'getMainLanes'>;
   profiles: Pick<ProfileService, 'getProfile' | 'findProfile'>;
+  patch(): Promise<PatchResponse>;
 }
 
 class BadRequest extends Error {}
 class NotFound extends Error {}
 
-export function createApp({ champions, matchups, profiles }: AppDeps) {
+export function createApp({ champions, matchups, profiles, patch }: AppDeps) {
   const app = express();
 
   const champion = (value: unknown): Champion => {
@@ -35,6 +36,8 @@ export function createApp({ champions, matchups, profiles }: AppDeps) {
   app.get('/api/champions', (_req, res) => { res.json(champions.champions()); });
 
   app.get('/api/main-lanes', async (_req, res) => { res.json(await matchups.getMainLanes()); });
+
+  app.get('/api/patch', async (_req, res) => { res.json(await patch()); });
 
   app.get('/api/matchup', async (req, res) => {
     const c = champion(req.query.champ);

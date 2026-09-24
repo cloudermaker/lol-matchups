@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   DEFAULT_TIER, LANES, TIERS, TIER_LABELS, lolalyticsBuildUrl,
-  type Champion, type Lane, type MainLanesResponse, type MatchupResponse, type ProfileResponse, type Tier, type TierListResponse,
+  type Champion, type Lane, type MainLanesResponse, type MatchupResponse, type PatchResponse, type ProfileResponse, type Tier, type TierListResponse,
 } from '@lol/shared';
-import { fetchChampions, fetchMainLanes, fetchMatchup, fetchProfile, fetchTierList } from './api';
+import { fetchChampions, fetchMainLanes, fetchMatchup, fetchPatch, fetchProfile, fetchTierList } from './api';
 import { PlayerPage } from './components/PlayerPage';
 import { PlayerSearch } from './components/PlayerSearch';
 import { addRecent, readRecent } from './recentPlayers';
@@ -60,6 +60,7 @@ export function App() {
   const [tierList, setTierList] = useState<TierListResponse | null>(null);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [recent, setRecent] = useState<string[]>(readRecent);
+  const [patch, setPatch] = useState<PatchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const request = useRef(0);
@@ -68,6 +69,8 @@ export function App() {
     fetchChampions().then(setChampions).catch((e) => setError(e.message));
     // optional: only used to preselect the lane
     fetchMainLanes().then(setMainLanes).catch(() => {});
+    // optional: homepage link only
+    fetchPatch().then(setPatch).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -90,7 +93,8 @@ export function App() {
       ? loadProfile(route.player).then((p) => {
         if (id !== request.current) return;
         setProfile(p);
-        setRecent(addRecent(p.riotId));
+        // only accounts with ranked games are worth a shortcut
+        if (p.games > 0) setRecent(addRecent(p.riotId));
         // keep Riot's exact ID in the URL
         if (p.riotId !== route.player) window.history.replaceState(null, '', routeUrl({ ...route, player: p.riotId }));
       })
@@ -183,6 +187,14 @@ export function App() {
             </p>
           </BuildPanel>
         </div>
+      )}
+      {!route.champ && !route.player && patch && (
+        // the image opens the notes; plain link only when there is no image
+        <section className="patch">
+          <a href={patch.notesUrl} target="_blank" rel="noreferrer" title={`Patch ${patch.patch} notes`}>
+            {patch.imageUrl ? <img src={patch.imageUrl} alt={`Patch ${patch.patch} highlights`} /> : `Patch ${patch.patch} notes ↗`}
+          </a>
+        </section>
       )}
       <footer className="muted">v{__APP_VERSION__}</footer>
     </main>

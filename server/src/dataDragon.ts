@@ -11,11 +11,13 @@ export class DataDragon {
   private byKey = new Map<number, Champion>();
   private items = new Map<string, Item>();
   private boots = new Set<string>();
+  version = '';
 
   constructor(private fetchJson: FetchJson) {}
 
   async load(): Promise<void> {
     const [version] = (await this.fetchJson(`${CDN}/api/versions.json`)) as string[];
+    this.version = version;
     const base = `${CDN}/cdn/${version}`;
     const champs = (await this.fetchJson(`${base}/data/en_US/champion.json`)) as { data: Record<string, RawChampion> };
     const items = (await this.fetchJson(`${base}/data/en_US/item.json`)) as { data: Record<string, RawItem> };

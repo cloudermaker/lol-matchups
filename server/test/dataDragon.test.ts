@@ -23,6 +23,12 @@ const fakeFetch = async (url: string) => {
 };
 
 describe('DataDragon', () => {
+  it('keeps the loaded game version', async () => {
+    const dd = new DataDragon(fakeFetch);
+    await dd.load();
+    expect(dd.version).toBe('16.19.1');
+  });
+
   it('loads champions and items from latest version', async () => {
     const dd = new DataDragon(fakeFetch);
     await dd.load();

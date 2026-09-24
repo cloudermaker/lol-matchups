@@ -8,6 +8,7 @@ import { loadConfig } from './config';
 import { DataDragon } from './dataDragon';
 import { fetchJson } from './http';
 import { MatchupService } from './matchup';
+import { patchInfo } from './patch';
 import { createProvider } from './providers';
 
 const config = loadConfig();
@@ -20,6 +21,9 @@ const riot = new RiotClient(config.riotApiKey);
 const store = new MatchStore(fileURLToPath(new URL('../data/matches', import.meta.url)), (id) => riot.match(id));
 const profiles = new ProfileService(riot, store, dd, matchups, new TtlCache(5 * 60 * 1000));
 
-createApp({ champions: dd, matchups, profiles }).listen(config.port, config.host, () => {
+// notes page checked once at startup; falls back to the patch index
+const patch = patchInfo(dd.version);
+
+createApp({ champions: dd, matchups, profiles, patch: () => patch }).listen(config.port, config.host, () => {
   console.log(`API on http://${config.host}:${config.port} (provider: ${config.provider})`);
 });

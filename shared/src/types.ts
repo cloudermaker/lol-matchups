@@ -29,3 +29,4 @@ export interface ProfileResponse {
   riotId: string; rank: Rank | null; tier: Tier; games: number; winRate: number; mainLane: Lane | null;
   pool: PoolEntry[]; advice: Advice[]; lolalyticsAvailable: boolean;
 }
+export interface PatchResponse { patch: string; notesUrl: string; imageUrl: string | null }

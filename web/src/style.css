@@ -48,3 +48,5 @@ footer { margin-top: 32px; font-size: 0.8em; text-align: right; }
 .player-search .field-row { max-width: 480px; }
 .recent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
 .recent button { cursor: pointer; }
+.patch { margin-top: 32px; padding-top: 24px; border-top: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
+.patch img { display: block; width: 100%; height: auto; border-radius: 8px; }

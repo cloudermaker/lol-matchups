@@ -28,6 +28,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
   vi.mocked(api.fetchProfile).mockImplementation(async (name, tag) => profileFor(`${name}#${tag}`));
+  vi.mocked(api.fetchPatch).mockResolvedValue({ patch: '26.19', notesUrl: 'https://example.test/notes', imageUrl: 'https://example.test/highlights.png' });
   vi.mocked(api.fetchChampions).mockResolvedValue(['Darius', 'Aaa', 'Bbb', 'LeeSin'].map(champ));
   vi.mocked(api.fetchMainLanes).mockResolvedValue({ Darius: 'top', LeeSin: 'jungle' });
   vi.mocked(api.fetchMatchup).mockImplementation(async (id, lane, tier) => matchupFor(id, lane, tier));
@@ -39,6 +40,48 @@ beforeEach(() => {
 });
 
 describe('App', () => {
+  it('links to the current patch notes on the homepage', async () => {
+    render(<App />);
+    await flush();
+    const image = screen.getByRole('img', { name: 'Patch 26.19 highlights' });
+    expect(image).toHaveAttribute('src', 'https://example.test/highlights.png');
+    const link = image.closest('a');
+    expect(link).toHaveAttribute('href', 'https://example.test/notes');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(screen.queryByText('Patch 26.19 notes ↗')).not.toBeInTheDocument();
+  });
+
+  it('puts the patch image at the bottom of the homepage', async () => {
+    render(<App />);
+    await flush();
+    const image = screen.getByRole('img', { name: 'Patch 26.19 highlights' });
+    const playerSearch = screen.getByText('Find a player');
+    expect(playerSearch.compareDocumentPosition(image) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows only the patch link when there is no image', async () => {
+    vi.mocked(api.fetchPatch).mockResolvedValue({ patch: '26.19', notesUrl: 'https://example.test/notes', imageUrl: null });
+    render(<App />);
+    await flush();
+    expect(screen.getByRole('link', { name: 'Patch 26.19 notes ↗' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /highlights/ })).not.toBeInTheDocument();
+  });
+
+  it('shows no patch link on other pages', async () => {
+    window.history.replaceState(null, '', '/?champ=Darius&lane=top');
+    render(<App />);
+    await flush();
+    expect(screen.queryByText(/Patch 26.19/)).not.toBeInTheDocument();
+  });
+
+  it('hides the patch link when it cannot be loaded', async () => {
+    vi.mocked(api.fetchPatch).mockRejectedValue(new Error('down'));
+    render(<App />);
+    await flush();
+    expect(screen.queryByText(/Patch/)).not.toBeInTheDocument();
+    expect(screen.queryByText('down')).not.toBeInTheDocument();
+  });
+
   it('loads the page from the URL', async () => {
     window.history.replaceState(null, '', '/?champ=Darius&lane=jungle');
     render(<App />);
@@ -357,13 +400,22 @@ describe('App', () => {
   });
 
   it('lists a loaded player as recent on the homepage', async () => {
-    vi.mocked(api.fetchProfile).mockResolvedValue(profileFor('Mr Noodle#EUW'));
+    vi.mocked(api.fetchProfile).mockResolvedValue({ ...profileFor('Mr Noodle#EUW'), games: 3 });
     window.history.replaceState(null, '', '/?player=mr%20noodle%23euw');
     render(<App />);
     await flush();
     fireEvent.click(screen.getByText('LoL Matchups'));
     await flush();
     expect(screen.getByRole('button', { name: 'Mr Noodle#EUW' })).toBeInTheDocument();
+  });
+
+  it('does not list a player with no ranked games', async () => {
+    window.history.replaceState(null, '', '/?player=Empty%23EUW');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByText('LoL Matchups'));
+    await flush();
+    expect(screen.queryByText('Recent')).not.toBeInTheDocument();
   });
 
   it('does not list a player whose profile failed', async () => {

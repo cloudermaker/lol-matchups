@@ -1,4 +1,4 @@
-import type { Champion, Lane, MainLanesResponse, MatchupResponse, ProfileResponse, Tier, TierListResponse } from '@lol/shared';
+import type { Champion, Lane, MainLanesResponse, MatchupResponse, PatchResponse, ProfileResponse, Tier, TierListResponse } from '@lol/shared';
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -9,6 +9,7 @@ async function get<T>(url: string): Promise<T> {
 
 export const fetchChampions = () => get<Champion[]>('/api/champions');
 export const fetchMainLanes = () => get<MainLanesResponse>('/api/main-lanes');
+export const fetchPatch = () => get<PatchResponse>('/api/patch');
 export const fetchTierList = (lane: Lane, tier: Tier) =>
   get<TierListResponse>(`/api/tierlist?${new URLSearchParams({ lane, tier })}`);
 export const fetchMatchup = (champ: string, lane: Lane, tier: Tier) =>
