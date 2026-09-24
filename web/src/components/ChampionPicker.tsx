@@ -1,31 +1,26 @@
-import { useEffect, useState } from 'react';
 import type { Champion } from '@lol/shared';
 
-interface Props { champions: Champion[]; value: string | null; onChange(id: string | null): void }
+interface Props { champions: Champion[]; value: string; onChange(text: string): void }
 
 export function ChampionPicker({ champions, value, onChange }: Props) {
-  const [text, setText] = useState('');
-
-  // show the current champion's name when the page changes
-  useEffect(() => {
-    const current = champions.find((c) => c.id.toLowerCase() === value?.toLowerCase());
-    if (current) setText(current.name);
-  }, [value, champions]);
-
   return (
     <>
       <input
         list="champions"
         placeholder="Champion…"
         aria-label="Champion"
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          const name = e.target.value.toLowerCase();
-          onChange(champions.find((c) => c.name.toLowerCase() === name)?.id ?? null);
-        }}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
       />
       <datalist id="champions">{champions.map((c) => <option key={c.id} value={c.name} />)}</datalist>
     </>
   );
+}
+
+// exact name or id first, then the first name starting with the text
+export function findChampion(champions: Champion[], text: string): Champion | undefined {
+  const q = text.trim().toLowerCase();
+  if (!q) return undefined;
+  return champions.find((c) => c.name.toLowerCase() === q || c.id.toLowerCase() === q)
+    ?? champions.find((c) => c.name.toLowerCase().startsWith(q));
 }

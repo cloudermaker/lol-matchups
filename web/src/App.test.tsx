@@ -127,6 +127,22 @@ describe('App', () => {
     expect(window.location.search).toBe('?champ=Aaa&lane=top&tier=emerald_plus');
   });
 
+  it('offers Gold+, Platinum+ and Emerald+ in labelled groups', async () => {
+    render(<App />);
+    await flush();
+    const tiers = screen.getByRole('group', { name: 'Tier' });
+    expect(Array.from(tiers.querySelectorAll('button'), (b) => b.textContent)).toEqual(['Gold+', 'Platinum+', 'Emerald+']);
+    expect(screen.getByRole('group', { name: 'Lane' })).toBeInTheDocument();
+    expect(screen.getByText('Tier', { selector: '.field-label' })).toBeInTheDocument();
+    expect(screen.getByText('Lane', { selector: '.field-label' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gold+' }));
+    await flush();
+    expect(window.location.search).toBe('?tier=gold_plus');
+    expect(api.fetchTierList).toHaveBeenLastCalledWith('top', 'gold_plus');
+    expect(screen.getByText('EUW · Gold+')).toBeInTheDocument();
+  });
+
   it('reads the tier from the URL on the homepage', async () => {
     window.history.replaceState(null, '', '/?lane=middle&tier=emerald_plus');
     render(<App />);
@@ -188,13 +204,65 @@ describe('App', () => {
     expect(api.fetchMatchup).toHaveBeenLastCalledWith('Bbb', 'jungle', 'platinum_plus');
   });
 
-  it('goes back to the homepage from the title', async () => {
+  it('goes back to / from the title and clears the search box', async () => {
     window.history.replaceState(null, '', '/?champ=Darius&lane=middle');
+    render(<App />);
+    await flush();
+    const title = screen.getByRole('link', { name: /LoL Matchups/ });
+    expect(title).toHaveAttribute('href', '/');
+    fireEvent.click(title);
+    await flush();
+    expect(window.location.pathname + window.location.search).toBe('/');
+    expect(screen.getByText('Best win rates — top')).toBeInTheDocument();
+    expect(screen.getByLabelText('Champion')).toHaveValue('');
+    expect(screen.getByText('Search')).toBeDisabled();
+  });
+
+  it('keeps the chosen tier when going home from the title', async () => {
+    window.history.replaceState(null, '', '/?champ=Darius&lane=middle&tier=gold_plus');
     render(<App />);
     await flush();
     fireEvent.click(screen.getByRole('link', { name: /LoL Matchups/ }));
     await flush();
-    expect(window.location.search).toBe('?lane=middle');
-    expect(screen.getByText('Best win rates — middle')).toBeInTheDocument();
+    expect(window.location.search).toBe('?tier=gold_plus');
+  });
+
+  it('enables Search as soon as text is typed and opens the first matching champion', async () => {
+    render(<App />);
+    await flush();
+    expect(screen.getByText('Search')).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Champion'), { target: { value: 'dar' } });
+    expect(screen.getByText('Search')).toBeEnabled();
+    fireEvent.click(screen.getByText('Search'));
+    await flush();
+    expect(window.location.search).toBe('?champ=Darius&lane=top');
+    expect(screen.getByLabelText('Champion')).toHaveValue('Darius');
+  });
+
+  it('searches with Enter', async () => {
+    render(<App />);
+    await flush();
+    const input = screen.getByLabelText('Champion');
+    fireEvent.change(input, { target: { value: 'darius' } });
+    fireEvent.submit(input);
+    await flush();
+    expect(window.location.search).toBe('?champ=Darius&lane=top');
+  });
+
+  it('shows an error for an unknown champion', async () => {
+    render(<App />);
+    await flush();
+    fireEvent.change(screen.getByLabelText('Champion'), { target: { value: 'zzz' } });
+    fireEvent.click(screen.getByText('Search'));
+    await flush();
+    expect(screen.getByText('Unknown champion: zzz')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+  });
+
+  it('Search stays enabled on a champion page after the data loads', async () => {
+    window.history.replaceState(null, '', '/?champ=Darius&lane=top');
+    render(<App />);
+    await flush();
+    expect(screen.getByText('Search')).toBeEnabled();
   });
 });

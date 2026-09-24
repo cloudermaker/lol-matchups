@@ -4,7 +4,7 @@ import {
   type Champion, type Lane, type MainLanesResponse, type MatchupResponse, type Tier, type TierListResponse,
 } from '@lol/shared';
 import { fetchChampions, fetchMainLanes, fetchMatchup, fetchTierList } from './api';
-import { ChampionPicker } from './components/ChampionPicker';
+import { ChampionPicker, findChampion } from './components/ChampionPicker';
 import { LanePicker } from './components/LanePicker';
 import { TierPicker } from './components/TierPicker';
 import { CounterList } from './components/CounterList';
@@ -25,16 +25,22 @@ function readRoute(): Route {
 }
 
 function routeUrl({ champ, lane, tier }: Route): string {
-  const q = new URLSearchParams(champ ? { champ, lane } : { lane });
+  const q = new URLSearchParams();
+  if (champ) q.set('champ', champ);
+  // homepage on the default lane stays at /
+  if (champ || lane !== 'top') q.set('lane', lane);
   if (tier !== DEFAULT_TIER) q.set('tier', tier);
-  return `?${q}`;
+  const query = q.toString();
+  return query ? `?${query}` : '/';
 }
+
+const HOME_LANE: Lane = 'top';
 
 export function App() {
   const [champions, setChampions] = useState<Champion[]>([]);
   const [mainLanes, setMainLanes] = useState<MainLanesResponse>({});
   const [route, setRoute] = useState<Route>(readRoute);
-  const [draftChamp, setDraftChamp] = useState<string | null>(route.champ);
+  const [query, setQuery] = useState('');
   const [draftLane, setDraftLane] = useState<Lane>(route.lane);
   const [result, setResult] = useState<MatchupResponse | null>(null);
   const [tierList, setTierList] = useState<TierListResponse | null>(null);
@@ -54,8 +60,12 @@ export function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  // search box shows the current champion's name, empty on the homepage
   useEffect(() => {
-    setDraftChamp(route.champ);
+    setQuery(route.champ ? (champions.find((c) => c.id === route.champ)?.name ?? route.champ) : '');
+  }, [route.champ, champions]);
+
+  useEffect(() => {
     setDraftLane(route.lane);
     // ignore responses from older navigations
     const id = ++request.current;
@@ -73,10 +83,18 @@ export function App() {
     setRoute(next);
   }
 
-  function pickChampion(id: string | null) {
-    setDraftChamp(id);
-    const lane = id ? mainLanes[id] : undefined;
+  function typeChampion(text: string) {
+    setQuery(text);
+    const exact = champions.find((c) => c.name.toLowerCase() === text.trim().toLowerCase());
+    const lane = exact ? mainLanes[exact.id] : undefined;
     if (lane) setDraftLane(lane);
+  }
+
+  function search(e: React.FormEvent) {
+    e.preventDefault();
+    const champion = findChampion(champions, query);
+    if (!champion) return setError(`Unknown champion: ${query.trim()}`);
+    open(champion.id, draftLane);
   }
 
   function changeLane(lane: Lane) {
@@ -86,22 +104,34 @@ export function App() {
   }
 
   const open = (champ: string, lane: Lane) => navigate({ champ, lane, tier: route.tier });
+  const home: Route = { champ: null, lane: HOME_LANE, tier: route.tier };
 
   return (
     <main>
       <h1>
-        <a href={routeUrl({ ...route, champ: null })} onClick={(e) => { e.preventDefault(); navigate({ ...route, champ: null }); }}>
+        <a href={routeUrl(home)} onClick={(e) => { e.preventDefault(); navigate(home); }}>
           LoL Matchups
         </a>{' '}
         <small>EUW · {TIER_LABELS[route.tier]}</small>
       </h1>
-      <div className="search">
-        <ChampionPicker champions={champions} value={draftChamp} onChange={pickChampion} />
-        <LanePicker value={draftLane} onChange={changeLane} />
-        <TierPicker value={route.tier} onChange={(tier) => navigate({ ...route, tier })} />
-        <button onClick={() => draftChamp && open(draftChamp, draftLane)} disabled={!draftChamp || loading}>
-          {loading ? 'Loading…' : 'Search'}
-        </button>
+      <div className="controls">
+        <form className="field field-champ" onSubmit={search}>
+          <span className="field-label">Champion</span>
+          <div className="field-row">
+            <ChampionPicker champions={champions} value={query} onChange={typeChampion} />
+            <button type="submit" className="primary" disabled={!query.trim() || loading}>
+              {loading ? 'Loading…' : 'Search'}
+            </button>
+          </div>
+        </form>
+        <div className="field">
+          <span className="field-label">Lane</span>
+          <LanePicker value={draftLane} onChange={changeLane} />
+        </div>
+        <div className="field">
+          <span className="field-label">Tier</span>
+          <TierPicker value={route.tier} onChange={(tier) => navigate({ ...route, tier })} />
+        </div>
       </div>
       {error && <p className="error">{error}</p>}
       {!route.champ && tierList && <TierList data={tierList} onOpen={(id) => open(id, tierList.lane)} />}

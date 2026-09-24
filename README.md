@@ -1,6 +1,6 @@
 # LoL Matchups (private)
 
-Pick a champion + lane → top 10 counters and recommended build (EUW, Platinum+ or Emerald+).
+Pick a champion + lane → top 10 counters and recommended build (EUW, Gold+, Platinum+ or Emerald+).
 
 ## Run
     cp .env.example .env

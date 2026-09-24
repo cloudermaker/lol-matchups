@@ -40,6 +40,13 @@ describe('API', () => {
     expect(d.matchups.getMatchup).toHaveBeenCalledWith(darius, 'top', 'emerald_plus');
   });
 
+  it('accepts the Gold+ tier', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/tierlist?lane=top&tier=gold_plus');
+    expect(res.status).toBe(200);
+    expect(d.matchups.getTierList).toHaveBeenCalledWith('top', 'gold_plus');
+  });
+
   it('400 on invalid tier', async () => {
     const d = deps();
     const res = await request(createApp(d)).get('/api/matchup?champ=darius&lane=top&tier=iron');

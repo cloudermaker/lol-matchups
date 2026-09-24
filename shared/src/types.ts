@@ -1,10 +1,10 @@
 export const LANES = ['top', 'jungle', 'middle', 'bottom', 'support'] as const;
 export type Lane = (typeof LANES)[number];
 
-export const TIERS = ['platinum_plus', 'emerald_plus'] as const;
+export const TIERS = ['gold_plus', 'platinum_plus', 'emerald_plus'] as const;
 export type Tier = (typeof TIERS)[number];
 export const DEFAULT_TIER: Tier = 'platinum_plus';
-export const TIER_LABELS: Record<Tier, string> = { platinum_plus: 'Platinum+', emerald_plus: 'Emerald+' };
+export const TIER_LABELS: Record<Tier, string> = { gold_plus: 'Gold+', platinum_plus: 'Platinum+', emerald_plus: 'Emerald+' };
 
 export interface Champion { id: string; key: number; name: string; icon: string }
 export interface Item { id: string; name: string; icon: string }
