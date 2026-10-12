@@ -32,7 +32,7 @@ During the loading screen, size up all 10 players and read the lane opponent in 
   - Smite holder → jungle (first one if several).
   - Remaining players: try all lane permutations; score = number of champions on their main lane (`/api/main-lanes` data); ties keep Riot's participant order.
   - Not 5 players or not Summoner's Rift → lanes `null`.
-- `form.ts` (pure) — from up to 10 ranked games: `games`, `wins`, `streak` (e.g. `W3`, `L2`), `kda`, `champGames`, `champWinRate`. Remakes excluded (same rule as profile).
+- `form.ts` (pure) — from up to 10 ranked games: `games`, `wins`, `streak` (e.g. `W3`, `L2`), `kda`, `champGames`, `champWins`. Remakes excluded (same rule as profile).
 - `service.ts` — `LiveService`:
   - `getGame(gameName, tagLine)` → `LiveGameResponse`. One failing league/mastery lookup leaves that card's fields `null`.
   - `getForm(puuid, championId)` → match-v5 `ids?queue=420&count=10`, `matchStore` with 5 parallel fetches, then `form.ts`.
@@ -44,16 +44,20 @@ During the loading screen, size up all 10 players and read the lane opponent in 
 - `GET /api/live/form/:puuid?champ=<key>` → `LiveFormResponse`.
 
 ## Shared types (`shared/src/types.ts`)
-- `LiveGameResponse`: `queueId`, `gameStartTime`, `me` (PUUID), `allies: LivePlayer[]`, `enemies: LivePlayer[]`.
-- `LivePlayer`: `puuid | null`, `riotId | null`, `anonymous`, `champion`, `spells`, `lane | null`, `rank | null`, `seasonWins | null`, `seasonLosses | null`, `mastery | null`.
-- `LiveFormResponse`: `games`, `wins`, `streak`, `kda`, `champGames`, `champWinRate`.
+- `LiveGameResponse`: `queueId`, `gameStartTime`, `me` (PUUID), `tier` (from your rank, for lolalytics), `allies: LivePlayer[]`, `enemies: LivePlayer[]`.
+- `LivePlayer`: `puuid | null`, `riotId | null`, `anonymous`, `champion`, `spells`, `lane | null`, `rank | null`, `seasonWins | null`, `seasonLosses | null`, `mastery | null`, `lookupFailed`.
+- `LiveFormResponse`: `games`, `wins`, `streak`, `kda`, `champGames`, `champWins`.
+- `VersusResponse`: `winRate`, `games` (your champion against the opponent).
+
+### Versus route
+- `GET /api/versus?champ=&vs=&lane=&tier=` → `VersusResponse | null` via `MatchupService.getVersus` (lolalytics counters of your champion).
 
 ## Web
 ### `LivePage.tsx`
 - Two columns (allies left, enemies right), rows aligned by lane; Riot order when lanes are unknown.
 - Card: champion icon, Riot ID, rank + LP, season win rate, mastery, form line (e.g. "W3 · 6-4 last 10 · 2/3 on Ahri"); skeleton while loading.
 - Badges: "One-trick" (7+ of last 10 on that champion), "Hot streak" / "Cold streak" (3+), "First time" (mastery < 10,000).
-- Lane opponent panel: their form on the champion, plus lolalytics matchup (your champion vs theirs: win rate, games) with a ↗ link to the champion page.
+- Lane opponent panel (below the grid): their form on the champion, plus lolalytics matchup (your champion vs theirs: win rate, games) with a ↗ link to the champion page.
 - Clicking an enemy card makes it the lane opponent and moves its form to the front of the queue.
 - Anonymous players and bots: "Hidden player" card, no lookups.
 
