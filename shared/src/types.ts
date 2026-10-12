@@ -30,3 +30,13 @@ export interface ProfileResponse {
   pool: PoolEntry[]; advice: Advice[]; lolalyticsAvailable: boolean;
 }
 export interface PatchResponse { patch: string; notesUrl: string; imageUrl: string | null }
+// lookupFailed: league or mastery call failed, fields are null
+export interface LivePlayer {
+  puuid: string | null; riotId: string | null; anonymous: boolean;
+  champion: Champion; spells: number[]; lane: Lane | null;
+  rank: Rank | null; seasonWins: number | null; seasonLosses: number | null; mastery: number | null; lookupFailed: boolean;
+}
+export interface LiveGameResponse { queueId: number; gameStartTime: number; me: string; tier: Tier; allies: LivePlayer[]; enemies: LivePlayer[] }
+// streak: e.g. "W3", "" without games
+export interface LiveFormResponse { games: number; wins: number; streak: string; kda: number; champGames: number; champWins: number }
+export interface VersusResponse { winRate: number; games: number }

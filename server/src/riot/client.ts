@@ -1,11 +1,11 @@
 import { RateLimiter, realSleep, type Sleep } from './rateLimiter';
-import type { RiotAccount, RiotLeagueEntry, RiotMatch } from './types';
+import type { RiotAccount, RiotActiveGame, RiotLeagueEntry, RiotMatch } from './types';
 
 const REGION = 'https://europe.api.riotgames.com';
 const PLATFORM = 'https://euw1.api.riotgames.com';
 const RANKED_SOLO = 420;
 
-export type RiotErrorKind = 'not_found' | 'key' | 'busy' | 'http';
+export type RiotErrorKind = 'not_found' | 'not_in_game' | 'key' | 'busy' | 'http';
 export class RiotError extends Error {
   constructor(public kind: RiotErrorKind, message: string) { super(message); }
 }
@@ -38,6 +38,26 @@ export class RiotClient {
 
   leagueEntries(puuid: string): Promise<RiotLeagueEntry[]> {
     return this.get(`${PLATFORM}/lol/league/v4/entries/by-puuid/${puuid}`) as Promise<RiotLeagueEntry[]>;
+  }
+
+  async activeGame(puuid: string): Promise<RiotActiveGame> {
+    try {
+      return await this.get(`${PLATFORM}/lol/spectator/v5/active-games/by-summoner/${puuid}`) as RiotActiveGame;
+    } catch (e) {
+      if (e instanceof RiotError && e.kind === 'not_found') throw new RiotError('not_in_game', 'Not in a game');
+      throw e;
+    }
+  }
+
+  // 0 when the player never played the champion
+  async mastery(puuid: string, championId: number): Promise<number> {
+    try {
+      const m = await this.get(`${PLATFORM}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/by-champion/${championId}`) as { championPoints: number };
+      return m.championPoints;
+    } catch (e) {
+      if (e instanceof RiotError && e.kind === 'not_found') return 0;
+      throw e;
+    }
   }
 
   private async get(url: string, retried = false): Promise<unknown> {

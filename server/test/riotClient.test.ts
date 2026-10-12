@@ -67,4 +67,27 @@ describe('RiotClient', () => {
   it('maps other errors to http', async () => {
     expect(await kind(setup([status(500)]).client.match('EUW1_1'))).toBe('http');
   });
+
+  it('gets the active game on the euw1 platform', async () => {
+    const game = { gameId: 1, mapId: 11, gameQueueConfigId: 420, gameStartTime: 5, participants: [] };
+    const { client, fetchFn } = setup([ok(game)]);
+    expect(await client.activeGame('p')).toEqual(game);
+    expect(fetchFn.mock.calls[0][0]).toBe('https://euw1.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/p');
+  });
+
+  it('reports no active game as not_in_game', async () => {
+    const { client } = setup([status(404)]);
+    expect(await kind(client.activeGame('p'))).toBe('not_in_game');
+  });
+
+  it('returns champion mastery points', async () => {
+    const { client, fetchFn } = setup([ok({ championPoints: 12345 })]);
+    expect(await client.mastery('p', 103)).toBe(12345);
+    expect(fetchFn.mock.calls[0][0]).toBe('https://euw1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/p/by-champion/103');
+  });
+
+  it('treats no mastery as 0 points', async () => {
+    const { client } = setup([status(404)]);
+    expect(await client.mastery('p', 103)).toBe(0);
+  });
 });
