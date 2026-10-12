@@ -50,3 +50,14 @@ footer { margin-top: 32px; font-size: 0.8em; text-align: right; }
 .recent button { cursor: pointer; }
 .patch { margin-top: 32px; padding-top: 24px; border-top: 1px solid color-mix(in srgb, var(--muted) 40%, transparent); }
 .patch img { display: block; width: 100%; height: auto; border-radius: 8px; }
+.live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.live-card { width: 100%; display: grid; grid-template-columns: 40px 1fr; gap: 2px 10px; text-align: left; padding: 8px 10px; border: 1px solid var(--muted); border-radius: 6px; background: var(--card); color: var(--fg); }
+.live-card img, .live-card > span:first-child { grid-row: span 4; border-radius: 4px; }
+.live-card > :not(:first-child) { grid-column: 2; }
+button.live-card { cursor: pointer; }
+.live-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.live-card .name { font-weight: 600; }
+.badge { display: inline-block; margin-right: 4px; padding: 0 6px; border-radius: 4px; font-size: 0.75em; background: color-mix(in srgb, var(--accent) 25%, transparent); }
+.skeleton { color: var(--muted); font-style: italic; }
+.live-opponent { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--accent); border-radius: 8px; background: var(--card); }
+@media (max-width: 600px) { .live-grid { grid-template-columns: 1fr; } }
