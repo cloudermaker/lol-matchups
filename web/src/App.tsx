@@ -4,8 +4,10 @@ import {
   type Champion, type Lane, type MainLanesResponse, type MatchupResponse, type PatchResponse, type ProfileResponse, type Tier, type TierListResponse,
 } from '@lol/shared';
 import { fetchChampions, fetchMainLanes, fetchMatchup, fetchPatch, fetchProfile, fetchTierList } from './api';
+import { LivePage } from './components/LivePage';
 import { PlayerPage } from './components/PlayerPage';
 import { PlayerSearch } from './components/PlayerSearch';
+import { readMe, saveMe } from './me';
 import { addRecent, readRecent } from './recentPlayers';
 import { parseRiotId } from './riotId';
 import { ChampionPicker, findChampion } from './components/ChampionPicker';
@@ -15,7 +17,7 @@ import { CounterList } from './components/CounterList';
 import { BuildPanel } from './components/BuildPanel';
 import { TierList } from './components/TierList';
 
-interface Route { champ: string | null; player: string | null; lane: Lane; tier: Tier }
+interface Route { champ: string | null; player: string | null; live: string | null; lane: Lane; tier: Tier }
 
 function readRoute(): Route {
   const q = new URLSearchParams(window.location.search);
@@ -24,12 +26,14 @@ function readRoute(): Route {
   return {
     champ: q.get('champ'),
     player: q.get('player'),
+    live: q.get('live'),
     lane: LANES.includes(lane) ? lane : 'top',
     tier: TIERS.includes(tier) ? tier : DEFAULT_TIER,
   };
 }
 
-function routeUrl({ champ, player, lane, tier }: Route): string {
+function routeUrl({ champ, player, live, lane, tier }: Route): string {
+  if (live) return `?${new URLSearchParams({ live })}`;
   if (player) return `?${new URLSearchParams({ player })}`;
   const q = new URLSearchParams();
   if (champ) q.set('champ', champ);
@@ -60,6 +64,7 @@ export function App() {
   const [tierList, setTierList] = useState<TierListResponse | null>(null);
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [recent, setRecent] = useState<string[]>(readRecent);
+  const [me, setMe] = useState<string | null>(readMe);
   const [patch, setPatch] = useState<PatchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,6 +93,8 @@ export function App() {
     setDraftLane(route.lane);
     // ignore responses from older navigations
     const id = ++request.current;
+    // the live page loads its own data
+    if (route.live) { setLoading(false); setError(null); return; }
     setLoading(true); setError(null);
     const load = route.player
       ? loadProfile(route.player).then((p) => {
@@ -131,9 +138,9 @@ export function App() {
     if (!route.champ && !route.player) navigate({ ...route, lane });
   }
 
-  const open = (champ: string, lane: Lane) => navigate({ champ, player: null, lane, tier: route.tier });
-  const openPlayer = (player: string) => navigate({ ...route, champ: null, player });
-  const home: Route = { champ: null, player: null, lane: HOME_LANE, tier: route.tier };
+  const open = (champ: string, lane: Lane) => navigate({ champ, player: null, live: null, lane, tier: route.tier });
+  const openPlayer = (player: string) => navigate({ ...route, champ: null, player, live: null });
+  const home: Route = { champ: null, player: null, live: null, lane: HOME_LANE, tier: route.tier };
 
   return (
     <main>
@@ -143,7 +150,7 @@ export function App() {
         </a>{' '}
         <small>EUW · {TIER_LABELS[route.player && profile ? profile.tier : route.tier]}</small>
       </h1>
-      {route.player ? (
+      {route.live ? null : route.player ? (
         // remount on a new player so the box shows Riot's exact ID
         <PlayerSearch key={profile?.riotId ?? route.player} initial={profile?.riotId ?? route.player} recent={recent} onSearch={openPlayer} />
       ) : (
@@ -168,11 +175,20 @@ export function App() {
         </div>
       )}
       {error && <p className="error">{error}</p>}
-      {!route.champ && !route.player && tierList && <TierList data={tierList} onOpen={(id) => open(id, tierList.lane)} />}
-      {!route.champ && !route.player && <PlayerSearch recent={recent} onSearch={openPlayer} />}
-      {route.player && profile && (
-        <PlayerPage data={profile} onOpen={(champ, lane) => navigate({ champ, player: null, lane, tier: profile.tier })} />
+      {!route.champ && !route.player && !route.live && me && (
+        <p><button className="primary" onClick={() => navigate({ ...home, live: me })}>Live game — {me}</button></p>
       )}
+      {route.live && (
+        <LivePage riotId={route.live} onOpenChampion={(champ, lane) => navigate({ champ, player: null, live: null, lane, tier: route.tier })} />
+      )}
+      {!route.champ && !route.player && !route.live && tierList && <TierList data={tierList} onOpen={(id) => open(id, tierList.lane)} />}
+      {!route.champ && !route.player && !route.live && <PlayerSearch recent={recent} onSearch={openPlayer} />}
+      {route.player && profile && (
+        <PlayerPage data={profile} onOpen={(champ, lane) => navigate({ champ, player: null, live: null, lane, tier: profile.tier })} />
+      )}
+      {route.player && profile && (me === profile.riotId
+        ? <p className="muted">This is you</p>
+        : <p><button onClick={() => setMe(saveMe(profile.riotId))}>This is me</button></p>)}
       {route.champ && result && (
         <div className="results">
           <section>
@@ -188,7 +204,7 @@ export function App() {
           </BuildPanel>
         </div>
       )}
-      {!route.champ && !route.player && patch && (
+      {!route.champ && !route.player && !route.live && patch && (
         // the image opens the notes; plain link only when there is no image
         <section className="patch">
           <a href={patch.notesUrl} target="_blank" rel="noreferrer" title={`Patch ${patch.patch} notes`}>

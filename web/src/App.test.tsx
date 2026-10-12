@@ -36,6 +36,7 @@ beforeEach(() => {
     lane, tier, best: [champ('Aaa')].map((c) => ({ champion: c, winRate: 55, games: 5000 })),
     worst: [champ('Bbb')].map((c) => ({ champion: c, winRate: 42, games: 3000 })),
   }));
+  vi.mocked(api.fetchLiveGame).mockResolvedValue({ queueId: 420, gameStartTime: 1, me: 'p', tier: 'gold_plus', allies: [], enemies: [] });
   window.history.replaceState(null, '', '/');
 });
 
@@ -434,5 +435,32 @@ describe('App', () => {
     render(<App />);
     await flush();
     expect(screen.getByText('No EUW account for Nobody#EUW')).toBeInTheDocument();
+  });
+});
+
+describe('live game', () => {
+  it('saves me from the player page and shows the Live game button', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByRole('button', { name: 'This is me' }));
+    expect(localStorage.getItem('me')).toBe('Me#EUW');
+    expect(screen.getByText('This is you')).toBeInTheDocument();
+  });
+
+  it('opens the live page from the homepage', async () => {
+    localStorage.setItem('me', 'Me#EUW');
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByRole('button', { name: 'Live game — Me#EUW' }));
+    await flush();
+    expect(window.location.search).toBe('?live=Me%23EUW');
+    expect(api.fetchLiveGame).toHaveBeenCalledWith('Me', 'EUW');
+  });
+
+  it('has no Live game button without me', async () => {
+    render(<App />);
+    await flush();
+    expect(screen.queryByRole('button', { name: /Live game/ })).not.toBeInTheDocument();
   });
 });
