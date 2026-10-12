@@ -1,4 +1,4 @@
-import type { Champion, Lane, MainLanesResponse, MatchupResponse, PatchResponse, ProfileResponse, Tier, TierListResponse } from '@lol/shared';
+import type { Champion, Lane, LiveFormResponse, LiveGameResponse, MainLanesResponse, MatchupResponse, PatchResponse, ProfileResponse, Tier, TierListResponse, VersusResponse } from '@lol/shared';
 
 async function get<T>(url: string): Promise<T> {
   const res = await fetch(url);
@@ -17,3 +17,9 @@ export const fetchMatchup = (champ: string, lane: Lane, tier: Tier) =>
 // without a tag the server tries the default EUW tags
 export const fetchProfile = (gameName: string, tagLine?: string) =>
   get<ProfileResponse>(`/api/profile/${encodeURIComponent(gameName)}${tagLine ? `/${encodeURIComponent(tagLine)}` : ''}`);
+export const fetchLiveGame = (gameName: string, tagLine: string) =>
+  get<LiveGameResponse>(`/api/live/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`);
+export const fetchLiveForm = (puuid: string, championKey: number) =>
+  get<LiveFormResponse>(`/api/live/form/${encodeURIComponent(puuid)}?champ=${championKey}`);
+export const fetchVersus = (champ: string, vs: string, lane: Lane, tier: Tier) =>
+  get<VersusResponse | null>(`/api/versus?${new URLSearchParams({ champ, vs, lane, tier })}`);
