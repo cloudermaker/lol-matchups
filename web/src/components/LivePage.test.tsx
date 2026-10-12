@@ -87,4 +87,22 @@ describe('LivePage', () => {
     await flush();
     expect(screen.getByText('Matchup data unavailable')).toBeInTheDocument();
   });
+it("has no opponent panel off Summoner's Rift, even after a click", async () => {
+    const noLanes = (ps: LivePlayer[]) => ps.map((p) => ({ ...p, lane: null }));
+    vi.mocked(api.fetchLiveGame).mockResolvedValue({ ...game, allies: noLanes(game.allies), enemies: noLanes(game.enemies) });
+    render(<LivePage riotId="Me#EUW" onOpenChampion={vi.fn()} />);
+    await flush();
+    expect(screen.queryByRole("button", { name: /e3#EUW/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Lane opponent/ })).not.toBeInTheDocument();
+  });
+
+  it("shows every enemy when teams are uneven", async () => {
+    const extra = player("e9", "Teemo", null);
+    const noLanes = (ps: LivePlayer[]) => ps.map((p) => ({ ...p, lane: null }));
+    vi.mocked(api.fetchLiveGame).mockResolvedValue({ ...game, allies: noLanes(game.allies.slice(0, 2)), enemies: [...noLanes(game.enemies), extra] });
+    render(<LivePage riotId="Me#EUW" onOpenChampion={vi.fn()} />);
+    await flush();
+    expect(screen.getByText(/e9#EUW/)).toBeInTheDocument();
+    expect(screen.getByText(/e4#EUW/)).toBeInTheDocument();
+  });
 });

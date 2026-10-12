@@ -132,26 +132,29 @@ export function LivePage({ riotId, onOpenChampion }: Props) {
   const allies = byLane(game.allies);
   const enemies = byLane(game.enemies);
   const oppForm = opp?.puuid ? forms[opp.puuid] : undefined;
+  // no lanes (not 5v5 Summoner's Rift): no opponent to pick
+  const lanesKnown = enemies.some((p) => p.lane);
+  const rows = Array.from({ length: Math.max(allies.length, enemies.length) }, (_, i) => [allies[i], enemies[i]] as const);
 
   return (
     <section className="live">
       <h2>Live game — {riotId}</h2>
       <div className="live-grid">
-        {allies.map((a, i) => (
-          <Fragment key={a.puuid ?? `a${i}`}>
-            <PlayerCard player={a} form={a.puuid ? forms[a.puuid] : undefined} />
-            {enemies[i] && (
+        {rows.map(([a, e], i) => (
+          <Fragment key={i}>
+            {a ? <PlayerCard player={a} form={a.puuid ? forms[a.puuid] : undefined} /> : <div />}
+            {e ? (
               <PlayerCard
-                player={enemies[i]}
-                form={enemies[i].puuid ? forms[enemies[i].puuid!] : undefined}
-                selected={enemies[i].puuid === opponent}
-                onSelect={enemies[i].puuid ? () => setOpponent(enemies[i].puuid) : undefined}
+                player={e}
+                form={e.puuid ? forms[e.puuid] : undefined}
+                selected={e.puuid === opponent}
+                onSelect={lanesKnown && e.puuid ? () => setOpponent(e.puuid) : undefined}
               />
-            )}
+            ) : <div />}
           </Fragment>
         ))}
       </div>
-      {opp && me && (
+      {opp && me && lane && (
         <section className="live-opponent">
           <h3>Lane opponent — {opp.riotId} ({opp.champion.name})</h3>
           <p>{formText(opp, oppForm)}</p>
@@ -160,7 +163,7 @@ export function LivePage({ riotId, onOpenChampion }: Props) {
           {versus && versus !== 'error' && (
             <p>{me.champion.name} vs {opp.champion.name}: {versus.winRate.toFixed(2)}% WR over {versus.games.toLocaleString('en-GB')} games</p>
           )}
-          {lane && <button onClick={() => onOpenChampion(opp.champion.id, lane)}>{opp.champion.name} counters ↗</button>}
+          <button onClick={() => onOpenChampion(opp.champion.id, lane)}>{opp.champion.name} counters ↗</button>
         </section>
       )}
     </section>
