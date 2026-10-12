@@ -1,6 +1,6 @@
 # LoL Matchups Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Local site: pick champion + lane → top 5 counters (EUW, Platinum) + build advice.
 
@@ -82,7 +82,7 @@ export interface BuildResponse { build: Build | null }
 export interface ErrorResponse { error: string }
 ```
 
-- [ ] **Step 1: Root files**
+- [x] **Step 1: Root files**
 
 `package.json`:
 ```json
@@ -123,7 +123,7 @@ MIN_GAMES=1000
 RIOT_API_KEY=
 ```
 
-- [ ] **Step 2: shared package**
+- [x] **Step 2: shared package**
 
 `shared/package.json`:
 ```json
@@ -131,7 +131,7 @@ RIOT_API_KEY=
 ```
 `shared/src/types.ts`: content from Interfaces above.
 
-- [ ] **Step 3: server package**
+- [x] **Step 3: server package**
 
 `server/package.json`:
 ```json
@@ -161,7 +161,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({ test: { include: ['test/**/*.test.ts'] } });
 ```
 
-- [ ] **Step 4: Smoke test** — `server/test/smoke.test.ts`:
+- [x] **Step 4: Smoke test** — `server/test/smoke.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { LANES } from '@lol/shared';
@@ -173,12 +173,12 @@ describe('shared types', () => {
 });
 ```
 
-- [ ] **Step 5: Install and run** (`web` workspace does not exist yet; create an empty `web/package.json` `{ "name": "@lol/web", "private": true }` so workspaces resolve — Task 7 replaces it)
+- [x] **Step 5: Install and run** (`web` workspace does not exist yet; create an empty `web/package.json` `{ "name": "@lol/web", "private": true }` so workspaces resolve — Task 7 replaces it)
 
 Run: `npm install && npm test -w server && npm run typecheck -w server`
 Expected: 1 test PASS, typecheck clean.
 
-- [ ] **Step 6: Stage** — `git add -A`
+- [x] **Step 6: Stage** — `git add -A`
 
 ---
 
@@ -196,7 +196,7 @@ export interface Config { provider: 'lolalytics' | 'riot'; port: number; minGame
 export function loadConfig(env?: NodeJS.ProcessEnv): Config;
 ```
 
-- [ ] **Step 1: Failing tests** — `server/test/cache.test.ts`:
+- [x] **Step 1: Failing tests** — `server/test/cache.test.ts`:
 ```ts
 import { describe, it, expect, vi } from 'vitest';
 import { TtlCache } from '../src/cache';
@@ -248,9 +248,9 @@ describe('loadConfig', () => {
 });
 ```
 
-- [ ] **Step 2: Run** `npm test -w server` → FAIL (modules missing).
+- [x] **Step 2: Run** `npm test -w server` → FAIL (modules missing).
 
-- [ ] **Step 3: Implement** — `server/src/cache.ts`:
+- [x] **Step 3: Implement** — `server/src/cache.ts`:
 ```ts
 export class TtlCache {
   private entries = new Map<string, { value: unknown; expires: number }>();
@@ -282,8 +282,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
 }
 ```
 
-- [ ] **Step 4: Run** `npm test -w server` → PASS.
-- [ ] **Step 5: Stage** — `git add -A`
+- [x] **Step 4: Run** `npm test -w server` → PASS.
+- [x] **Step 5: Stage** — `git add -A`
 
 ---
 
@@ -306,7 +306,7 @@ export class DataDragon {
 }
 ```
 
-- [ ] **Step 1: Failing test** — `server/test/dataDragon.test.ts`:
+- [x] **Step 1: Failing test** — `server/test/dataDragon.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { DataDragon } from '../src/dataDragon';
@@ -356,9 +356,9 @@ describe('DataDragon', () => {
 });
 ```
 
-- [ ] **Step 2: Run** `npm test -w server` → FAIL.
+- [x] **Step 2: Run** `npm test -w server` → FAIL.
 
-- [ ] **Step 3: Implement** — `server/src/http.ts`:
+- [x] **Step 3: Implement** — `server/src/http.ts`:
 ```ts
 export type FetchJson = (url: string) => Promise<unknown>;
 
@@ -413,8 +413,8 @@ export class DataDragon {
 }
 ```
 
-- [ ] **Step 4: Run** `npm test -w server` → PASS.
-- [ ] **Step 5: Stage** — `git add -A`
+- [x] **Step 4: Run** `npm test -w server` → PASS.
+- [x] **Step 5: Stage** — `git add -A`
 
 ---
 
@@ -439,7 +439,7 @@ export class ProviderError extends Error {}
 - `bootsCandidates` = every item id from `itemBootSet*` entries, most-played first (by summed games); `MatchupService` picks the first that `DataDragon.isBoots`.
 - `lolalyticsSlug(id)` exported for tests.
 
-- [ ] **Step 1: Failing test** — `server/test/lolalytics.test.ts`:
+- [x] **Step 1: Failing test** — `server/test/lolalytics.test.ts`:
 ```ts
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -518,9 +518,9 @@ describe('LolalyticsProvider', () => {
 ```
 Note: `bootsCandidates` mixes boots and other items (summed games across boot sets: 3047=20687, 3142=17336); the service keeps the first real boots. `winRate` = 2918/5062 rounded to 2 dp.
 
-- [ ] **Step 2: Run** `npm test -w server` → FAIL.
+- [x] **Step 2: Run** `npm test -w server` → FAIL.
 
-- [ ] **Step 3: Implement** — `server/src/providers/types.ts`: content from Interfaces.
+- [x] **Step 3: Implement** — `server/src/providers/types.ts`: content from Interfaces.
 
 `server/src/providers/lolalytics.ts`:
 ```ts
@@ -595,8 +595,8 @@ export class LolalyticsProvider implements Provider {
 }
 ```
 
-- [ ] **Step 4: Run** `npm test -w server` → PASS. If `early` assertion fails, print `fixture('earlyset-darius-top.json').earlySet` and fix the expected array to the entry with highest games (index 3) — the fixture is the source of truth.
-- [ ] **Step 5: Stage** — `git add -A`
+- [x] **Step 4: Run** `npm test -w server` → PASS. If `early` assertion fails, print `fixture('earlyset-darius-top.json').earlySet` and fix the expected array to the entry with highest games (index 3) — the fixture is the source of truth.
+- [x] **Step 5: Stage** — `git add -A`
 
 ---
 
@@ -620,7 +620,7 @@ export class MatchupService {
 }
 ```
 
-- [ ] **Step 1: Failing test** — `server/test/matchup.test.ts`:
+- [x] **Step 1: Failing test** — `server/test/matchup.test.ts`:
 ```ts
 import { describe, it, expect, vi } from 'vitest';
 import type { Champion } from '@lol/shared';
@@ -698,9 +698,9 @@ describe('MatchupService.getBuild', () => {
 });
 ```
 
-- [ ] **Step 2: Run** `npm test -w server` → FAIL.
+- [x] **Step 2: Run** `npm test -w server` → FAIL.
 
-- [ ] **Step 3: Implement** — `server/src/matchup.ts`:
+- [x] **Step 3: Implement** — `server/src/matchup.ts`:
 ```ts
 import type { Build, BuildResponse, Champion, Counter, Item, Lane, MatchupResponse } from '@lol/shared';
 import type { TtlCache } from './cache';
@@ -759,8 +759,8 @@ export class MatchupService {
 }
 ```
 
-- [ ] **Step 4: Run** `npm test -w server` → PASS.
-- [ ] **Step 5: Stage** — `git add -A`
+- [x] **Step 4: Run** `npm test -w server` → PASS.
+- [x] **Step 5: Stage** — `git add -A`
 
 ---
 
@@ -781,7 +781,7 @@ export function createProvider(config: Config, fetchJson: FetchJson): Provider;
 ```
 Routes: `GET /api/champions`, `GET /api/matchup?champ=&lane=`, `GET /api/build?champ=&lane=&vs=`.
 
-- [ ] **Step 1: Failing test** — `server/test/app.test.ts`:
+- [x] **Step 1: Failing test** — `server/test/app.test.ts`:
 ```ts
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
@@ -858,9 +858,9 @@ describe('API', () => {
 });
 ```
 
-- [ ] **Step 2: Run** `npm test -w server` → FAIL.
+- [x] **Step 2: Run** `npm test -w server` → FAIL.
 
-- [ ] **Step 3: Implement** — `server/src/app.ts`:
+- [x] **Step 3: Implement** — `server/src/app.ts`:
 ```ts
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { LANES, type Champion, type Lane } from '@lol/shared';
@@ -956,9 +956,9 @@ createApp({ champions: dd, matchups }).listen(config.port, () => {
 });
 ```
 
-- [ ] **Step 4: Run** `npm test -w server && npm run typecheck -w server` → PASS, clean.
-- [ ] **Step 5: Live check** — `cp .env.example .env`, `npm run dev:server`, then `curl "http://localhost:3001/api/matchup?champ=darius&lane=top"` → 5 counters with names, build with items. Stop the server.
-- [ ] **Step 6: Stage** — `git add -A` (verify `.env` is NOT staged: `git status --short | grep .env` shows only `.env.example`).
+- [x] **Step 4: Run** `npm test -w server && npm run typecheck -w server` → PASS, clean.
+- [x] **Step 5: Live check** — `cp .env.example .env`, `npm run dev:server`, then `curl "http://localhost:3001/api/matchup?champ=darius&lane=top"` → 5 counters with names, build with items. Stop the server.
+- [x] **Step 6: Stage** — `git add -A` (verify `.env` is NOT staged: `git status --short | grep .env` shows only `.env.example`).
 
 ---
 
@@ -981,7 +981,7 @@ Components:
 - `CounterList({ counters, selected, onSelect })` — list; empty → "No counters with enough games".
 - `BuildPanel({ title, build })` — `build === null` → "Not enough data for this matchup".
 
-- [ ] **Step 1: Package files**
+- [x] **Step 1: Package files**
 
 `web/package.json`:
 ```json
@@ -1027,7 +1027,7 @@ export default defineConfig({
 ```
 Run: `npm install`.
 
-- [ ] **Step 2: Failing test** — `web/src/components/CounterList.test.tsx`:
+- [x] **Step 2: Failing test** — `web/src/components/CounterList.test.tsx`:
 ```tsx
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { Counter } from '@lol/shared';
@@ -1060,9 +1060,9 @@ describe('CounterList', () => {
 });
 ```
 
-- [ ] **Step 3: Run** `npm test -w web` → FAIL.
+- [x] **Step 3: Run** `npm test -w web` → FAIL.
 
-- [ ] **Step 4: Implement components**
+- [x] **Step 4: Implement components**
 
 `web/src/components/CounterList.tsx`:
 ```tsx
@@ -1261,8 +1261,8 @@ input, button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1p
 .error { color: var(--bad); }
 ```
 
-- [ ] **Step 5: Run** `npm test -w web && npm run typecheck -w web` → PASS, clean.
-- [ ] **Step 6: Stage** — `git add -A`
+- [x] **Step 5: Run** `npm test -w web && npm run typecheck -w web` → PASS, clean.
+- [x] **Step 6: Stage** — `git add -A`
 
 ---
 
@@ -1270,7 +1270,7 @@ input, button { font: inherit; padding: 8px 12px; border-radius: 6px; border: 1p
 
 **Files:** Create `README.md`.
 
-- [ ] **Step 1: README**
+- [x] **Step 1: README**
 ```markdown
 # LoL Matchups (private)
 
@@ -1292,6 +1292,6 @@ Pick a champion + lane → top 5 counters and recommended build (EUW, Platinum).
     npm test
 ```
 
-- [ ] **Step 2: Full test + typecheck** — `npm test && npm run typecheck` → all PASS.
-- [ ] **Step 3: Manual E2E** — run both dev servers; in the browser: Darius + top → 5 counters with icons, build shows early/core/boots; click a counter → "Not enough data for this matchup"; Wukong + jungle → results; stop the API server and search → "Request failed"/"Data source unavailable" message shown.
-- [ ] **Step 4: Stage** — `git add -A`. Ask the user whether to commit.
+- [x] **Step 2: Full test + typecheck** — `npm test && npm run typecheck` → all PASS.
+- [x] **Step 3: Manual E2E** — run both dev servers; in the browser: Darius + top → 5 counters with icons, build shows early/core/boots; click a counter → "Not enough data for this matchup"; Wukong + jungle → results; stop the API server and search → "Request failed"/"Data source unavailable" message shown.
+- [x] **Step 4: Stage** — `git add -A`. Ask the user whether to commit.

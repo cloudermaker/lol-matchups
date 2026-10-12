@@ -1,6 +1,6 @@
 # Player Profile Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Enter a Riot ID (`Name#TAG`) and get the player's last 50 ranked Solo/Duo games as a champion pool table, stats against lane opponents, and short advice.
 
@@ -62,7 +62,7 @@
 **Interfaces:**
 - Produces: `RateLimiter(windows: RateWindow[], now?: () => number, sleep?: Sleep)` with `acquire(): Promise<void>`; `type Sleep = (ms: number) => Promise<void>`; `realSleep: Sleep`; `interface RateWindow { limit: number; windowMs: number }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // server/test/rateLimiter.test.ts
@@ -101,12 +101,12 @@ describe('RateLimiter', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -w server -- rateLimiter`
 Expected: FAIL, cannot resolve `../src/riot/rateLimiter`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // server/src/riot/rateLimiter.ts
@@ -140,7 +140,7 @@ export class RateLimiter {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -w server -- rateLimiter`
 Expected: 3 tests PASS.
@@ -160,7 +160,7 @@ Expected: 3 tests PASS.
   - `class RiotError extends Error { kind: 'not_found' | 'key' | 'busy' | 'http' }`.
   - `RiotClient(apiKey?: string, fetchFn?: RiotFetch, limiter?: RateLimiter, sleep?: Sleep)` with `account(gameName, tagLine): Promise<RiotAccount>`, `matchIds(puuid, count): Promise<string[]>`, `match(id): Promise<RiotMatch>`, `leagueEntries(puuid): Promise<RiotLeagueEntry[]>`.
 
-- [ ] **Step 1: Write the Riot types**
+- [x] **Step 1: Write the Riot types**
 
 ```ts
 // server/src/riot/types.ts
@@ -178,7 +178,7 @@ export interface RiotParticipant {
 export interface RiotMatch { metadata: { matchId: string }; info: { gameDuration: number; queueId: number; participants: RiotParticipant[] } }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 ```ts
 // server/test/riotClient.test.ts
@@ -254,12 +254,12 @@ describe('RiotClient', () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm test -w server -- riotClient`
 Expected: FAIL, cannot resolve `../src/riot/client`.
 
-- [ ] **Step 4: Write the implementation**
+- [x] **Step 4: Write the implementation**
 
 ```ts
 // server/src/riot/client.ts
@@ -323,7 +323,7 @@ export class RiotClient {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -w server -- riotClient`
 Expected: 9 tests PASS.
@@ -341,7 +341,7 @@ Expected: 9 tests PASS.
 - Consumes: `RiotMatch` (Task 2).
 - Produces: `MatchStore(dir: string, fetchMatch: (id: string) => Promise<RiotMatch>)` with `get(id: string): Promise<RiotMatch>`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // server/test/matchStore.test.ts
@@ -388,12 +388,12 @@ describe('MatchStore', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -w server -- matchStore`
 Expected: FAIL, cannot resolve `../src/riot/matchStore`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // server/src/riot/matchStore.ts
@@ -426,7 +426,7 @@ export class MatchStore {
 }
 ```
 
-- [ ] **Step 4: Ignore the data folder**
+- [x] **Step 4: Ignore the data folder**
 
 Append this line to `.gitignore`:
 
@@ -434,7 +434,7 @@ Append this line to `.gitignore`:
 server/data/
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -w server -- matchStore`
 Expected: 4 tests PASS.
@@ -455,7 +455,7 @@ Expected: 4 tests PASS.
   - `PlayedGame`, `PoolRow`, `MIN_BENCHMARK_GAMES = 3`, `isRemake(m)`, `statLine(p, minutes)`, `toGames(puuid, matches): PlayedGame[]`, `average(lines)`, `buildPool(games): PoolRow[]`, `mainLane(games): Lane | null`, `tierForRank(tier?: string): Tier`.
   - Fixtures: `participant(o?)`, `match(id, participants, duration?)`, `laneGame(id, o)`.
 
-- [ ] **Step 1: Append the shared types**
+- [x] **Step 1: Append the shared types**
 
 Append to `shared/src/types.ts`:
 
@@ -475,7 +475,7 @@ export interface ProfileResponse {
 }
 ```
 
-- [ ] **Step 2: Write the fixtures**
+- [x] **Step 2: Write the fixtures**
 
 ```ts
 // server/test/fixtures/riot.ts
@@ -508,7 +508,7 @@ export function laneGame(id: string, o: LaneGame): RiotMatch {
 }
 ```
 
-- [ ] **Step 3: Write the failing test**
+- [x] **Step 3: Write the failing test**
 
 ```ts
 // server/test/aggregate.test.ts
@@ -612,12 +612,12 @@ describe('tierForRank', () => {
 });
 ```
 
-- [ ] **Step 4: Run test to verify it fails**
+- [x] **Step 4: Run test to verify it fails**
 
 Run: `npm test -w server -- aggregate`
 Expected: FAIL, cannot resolve `../src/profile/aggregate`.
 
-- [ ] **Step 5: Write the implementation**
+- [x] **Step 5: Write the implementation**
 
 ```ts
 // server/src/profile/aggregate.ts
@@ -714,7 +714,7 @@ export function tierForRank(rankTier: string | undefined): Tier {
 }
 ```
 
-- [ ] **Step 6: Run test to verify it passes**
+- [x] **Step 6: Run test to verify it passes**
 
 Run: `npm test -w server -- aggregate`
 Expected: all aggregate tests PASS.
@@ -731,7 +731,7 @@ Expected: all aggregate tests PASS.
 - Consumes: `PlayedGame`, `PoolRow`, `MIN_BENCHMARK_GAMES`, `buildPool`, `mainLane` (Task 4); `Advice` (shared).
 - Produces: `LaneData { counterKeys: number[]; coreItems: number[] }`, `AdviceInput`, `laneKey(championKey, lane): string`, `buildAdvice(input): Advice[]`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // server/test/advice.test.ts
@@ -795,12 +795,12 @@ describe('buildAdvice', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -w server -- advice`
 Expected: FAIL, cannot resolve `../src/profile/advice`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // server/src/profile/advice.ts
@@ -888,7 +888,7 @@ function buildGaps({ games, pool, laneData, championName, itemName }: AdviceInpu
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -w server -- advice`
 Expected: 7 tests PASS.
@@ -905,7 +905,7 @@ Expected: 7 tests PASS.
 - Consumes: `RiotClient`, `RiotError` (Task 2); `RiotMatch` (Task 2); `toGames`, `buildPool`, `mainLane`, `tierForRank`, `PoolRow` (Task 4); `buildAdvice`, `laneKey`, `LaneData` (Task 5); existing `TtlCache` and `MatchupService.getMatchup(champion, lane, tier): Promise<MatchupResponse>`.
 - Produces: `ProfileService(riot, matches, catalog, matchups, cache)` with `getProfile(gameName: string, tagLine: string): Promise<ProfileResponse>`; `ProfileCatalog { championByKey(key: number): Champion | undefined; item(id: string): { name: string } | undefined }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 // server/test/profileService.test.ts
@@ -1014,12 +1014,12 @@ describe('ProfileService', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -w server -- profileService`
 Expected: FAIL, cannot resolve `../src/profile/service`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 ```ts
 // server/src/profile/service.ts
@@ -1131,7 +1131,7 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -w server -- profileService`
 Expected: 8 tests PASS.
@@ -1148,7 +1148,7 @@ Expected: 8 tests PASS.
 - Consumes: `ProfileService.getProfile` (Task 6), `RiotError` (Task 2), `RiotClient`, `MatchStore` (Tasks 2–3).
 - Produces: `GET /api/profile/:gameName/:tagLine` → `ProfileResponse`; `AppDeps.profiles: Pick<ProfileService, 'getProfile'>`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `server/test/app.test.ts`:
 - Add imports:
@@ -1208,12 +1208,12 @@ const profile: ProfileResponse = {
   });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -w server -- app`
 Expected: the 4 new tests FAIL with 404 responses (route missing). The typecheck step later confirms `profiles` is part of `AppDeps`.
 
-- [ ] **Step 3: Implement the route**
+- [x] **Step 3: Implement the route**
 
 In `server/src/app.ts`:
 - Add imports:
@@ -1262,7 +1262,7 @@ export interface AppDeps {
   });
 ```
 
-- [ ] **Step 4: Wire the server**
+- [x] **Step 4: Wire the server**
 
 In `server/src/server.ts`:
 - Add imports:
@@ -1287,7 +1287,7 @@ createApp({ champions: dd, matchups, profiles }).listen(config.port, config.host
 });
 ```
 
-- [ ] **Step 5: Run server tests and typecheck**
+- [x] **Step 5: Run server tests and typecheck**
 
 Run: `npm test -w server && npm run typecheck -w server`
 Expected: all server tests PASS; typecheck exits 0.
@@ -1305,7 +1305,7 @@ Expected: all server tests PASS; typecheck exits 0.
 - Consumes: `ProfileResponse`, `PoolEntry`, `StatLine`, `Lane` (shared, Task 4).
 - Produces: `parseRiotId(text): { gameName: string; tagLine: string } | null`; `fetchProfile(gameName, tagLine): Promise<ProfileResponse>`; `<PlayerPage data={ProfileResponse} onOpen={(id: string, lane: Lane) => void} />`; `compare(you, them, lowerIsBetter?): 'better' | 'worse' | 'even'`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 // web/src/riotId.test.ts
@@ -1392,12 +1392,12 @@ describe('PlayerPage', () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -w web -- riotId PlayerPage`
 Expected: FAIL, cannot resolve `./riotId` and `./PlayerPage`.
 
-- [ ] **Step 3: Write `riotId.ts` and `fetchProfile`**
+- [x] **Step 3: Write `riotId.ts` and `fetchProfile`**
 
 ```ts
 // web/src/riotId.ts
@@ -1420,7 +1420,7 @@ export const fetchProfile = (gameName: string, tagLine: string) =>
   get<ProfileResponse>(`/api/profile/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`);
 ```
 
-- [ ] **Step 4: Write `PlayerPage.tsx`**
+- [x] **Step 4: Write `PlayerPage.tsx`**
 
 ```tsx
 // web/src/components/PlayerPage.tsx
@@ -1510,7 +1510,7 @@ function PoolTable({ pool, onOpen }: { pool: PoolEntry[]; onOpen: Props['onOpen'
 }
 ```
 
-- [ ] **Step 5: Add styles**
+- [x] **Step 5: Add styles**
 
 Append to `web/src/style.css`:
 
@@ -1525,7 +1525,7 @@ Append to `web/src/style.css`:
 .pool td.worse { color: var(--bad); }
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `npm test -w web -- riotId PlayerPage`
 Expected: all riotId and PlayerPage tests PASS.
@@ -1541,7 +1541,7 @@ Expected: all riotId and PlayerPage tests PASS.
 - Consumes: `parseRiotId`, `fetchProfile`, `PlayerPage` (Task 8).
 - Produces: URL `?player=Name%23TAG`; a search containing `#` opens the player page.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `web/src/App.test.tsx`:
 - Add `ProfileResponse` to the `@lol/shared` type import.
@@ -1601,12 +1601,12 @@ const profileFor = (riotId: string): ProfileResponse => ({
   });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -w web -- App`
 Expected: the 4 new tests FAIL (no player routing yet).
 
-- [ ] **Step 3: Implement routing and search in `App.tsx`**
+- [x] **Step 3: Implement routing and search in `App.tsx`**
 
 - Imports: add `ProfileResponse` to the `@lol/shared` type import, `fetchProfile` to the `./api` import, and:
 
@@ -1701,12 +1701,12 @@ function routeUrl({ champ, player, lane, tier }: Route): string {
 
 - In `web/src/components/ChampionPicker.tsx`, change the placeholder to `placeholder="Champion or Name#TAG…"`.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -w web -- App`
 Expected: all App tests PASS, including the existing ones.
 
-- [ ] **Step 5: Update the changelog**
+- [x] **Step 5: Update the changelog**
 
 `0.1.0` is untagged, so add this under `## [0.1.0] - 2026-09-24` → `### Added` in `CHANGELOG.md`:
 
@@ -1714,12 +1714,12 @@ Expected: all App tests PASS, including the existing ones.
 - feat: player profile from a Riot ID (champion pool, stats vs lane opponents, advice)
 ```
 
-- [ ] **Step 6: Full verification**
+- [x] **Step 6: Full verification**
 
 Run: `npm test && npm run typecheck`
 Expected: all server and web tests PASS (70 existing plus the new ones); both typechecks exit 0.
 
-- [ ] **Step 7: Manual check with the real key**
+- [x] **Step 7: Manual check with the real key**
 
 Set `RIOT_API_KEY` in `.env`, run `npm run dev`, search your `Name#TAG` and check:
 - The first load takes a few seconds, and a reload is instant.
