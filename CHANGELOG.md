@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: lane opponent panel with lolalytics matchup win rate
 - feat: "This is me" on the player page and a Live game button on the homepage
 - chore: `npm run start -w server` and a Vercel rewrite for deployment
+- chore: server runs as a Vercel Express function (bundled entry, /tmp match cache)
 
 ## [0.1.0] - 2026-09-24
 
