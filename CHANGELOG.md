@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- feat: live game page with rank, mastery and recent form for all 10 players
+- feat: lane opponent panel with lolalytics matchup win rate
+- feat: "This is me" on the player page and a Live game button on the homepage
+
 ## [0.1.0] - 2026-09-24
 
 ### Added
@@ -23,3 +31,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: current patch notes link and highlights image on the homepage
 - chore: `npm run dev` starts API and site together
 - chore: dev server restarts when `.env` changes
+- chore: `npm run start -w server` and a Vercel rewrite for deployment

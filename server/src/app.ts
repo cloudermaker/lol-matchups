@@ -1,5 +1,6 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { DEFAULT_TIER, LANES, TIERS, type Champion, type Lane, type PatchResponse, type Tier } from '@lol/shared';
+import type { LiveService } from './live/service';
 import type { MatchupService } from './matchup';
 import { ProviderError } from './providers/types';
 import type { ProfileService } from './profile/service';
@@ -7,15 +8,16 @@ import { RiotError } from './riot/client';
 
 export interface AppDeps {
   champions: { champions(): Champion[]; championById(id: string): Champion | undefined };
-  matchups: Pick<MatchupService, 'getMatchup' | 'getTierList' | 'getMainLanes'>;
+  matchups: Pick<MatchupService, 'getMatchup' | 'getTierList' | 'getMainLanes' | 'getVersus'>;
   profiles: Pick<ProfileService, 'getProfile' | 'findProfile'>;
+  live: Pick<LiveService, 'getGame' | 'getForm'>;
   patch(): Promise<PatchResponse>;
 }
 
 class BadRequest extends Error {}
 class NotFound extends Error {}
 
-export function createApp({ champions, matchups, profiles, patch }: AppDeps) {
+export function createApp({ champions, matchups, profiles, live, patch }: AppDeps) {
   const app = express();
 
   const champion = (value: unknown): Champion => {
@@ -66,6 +68,28 @@ export function createApp({ champions, matchups, profiles, patch }: AppDeps) {
       res.json(await profiles.getProfile(gameName, tagLine));
     } catch (e) {
       if (e instanceof RiotError && e.kind === 'not_found') throw new NotFound(`No EUW account for ${gameName}#${tagLine}`);
+      throw e;
+    }
+  });
+
+  app.get('/api/versus', async (req, res) => {
+    res.json(await matchups.getVersus(champion(req.query.champ), champion(req.query.vs), lane(req.query.lane), tier(req.query.tier)));
+  });
+
+  // before the Riot ID route, else 'form' would match :gameName
+  app.get('/api/live/form/:puuid', async (req, res) => {
+    const key = Number(req.query.champ);
+    if (!Number.isInteger(key) || key <= 0) throw new BadRequest(`Invalid champion key: ${req.query.champ ?? ''}`);
+    res.json(await live.getForm(req.params.puuid, key));
+  });
+
+  app.get('/api/live/:gameName/:tagLine', async (req, res) => {
+    const { gameName, tagLine } = req.params;
+    try {
+      res.json(await live.getGame(gameName, tagLine));
+    } catch (e) {
+      if (e instanceof RiotError && e.kind === 'not_found') throw new NotFound(`No EUW account for ${gameName}#${tagLine}`);
+      if (e instanceof RiotError && e.kind === 'not_in_game') throw new NotFound(`${gameName}#${tagLine} is not in a game`);
       throw e;
     }
   });

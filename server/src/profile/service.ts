@@ -3,6 +3,7 @@ import type { TtlCache } from '../cache';
 import type { MatchupService } from '../matchup';
 import { RiotError, type RiotClient } from '../riot/client';
 import type { RiotMatch } from '../riot/types';
+import { mapLimit } from '../mapLimit';
 import { buildAdvice, laneKey, type LaneData } from './advice';
 import { buildPool, mainLane, tierForRank, toGames, type PoolRow } from './aggregate';
 
@@ -116,17 +117,4 @@ export class ProfileService {
     }));
     return { laneData, available };
   }
-}
-
-async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) {
-      const i = next++;
-      results[i] = await fn(items[i]);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
 }

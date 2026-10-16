@@ -112,3 +112,18 @@ describe('MatchupService.getMainLanes', () => {
     expect(p.getMainLanes).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('getVersus', () => {
+  it("returns your champion's win rate against the opponent", async () => {
+    const p = provider();
+    const service = new MatchupService(p, catalog, new TtlCache(60_000), 1000);
+    expect(await service.getVersus(darius, champ(3), 'top', 'platinum_plus')).toEqual({ winRate: 42, games: 1002 });
+    expect(p.getCounters).toHaveBeenCalledWith('Darius', 'top', 'platinum_plus');
+  });
+
+  it('returns null below min games or when missing', async () => {
+    const service = new MatchupService(provider(), catalog, new TtlCache(60_000), 1000);
+    expect(await service.getVersus(darius, champ(50), 'top', 'platinum_plus')).toBeNull();
+    expect(await service.getVersus(darius, champ(77), 'top', 'platinum_plus')).toBeNull();
+  });
+});

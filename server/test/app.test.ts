@@ -19,9 +19,14 @@ function deps(overrides: Partial<AppDeps['matchups']> = {}): AppDeps {
       getMatchup: vi.fn().mockResolvedValue({ champion: darius, lane: 'top', tier: 'platinum_plus', counters: [], build: null }),
       getTierList: vi.fn().mockResolvedValue({ lane: 'top', tier: 'platinum_plus', best: [], worst: [] }),
       getMainLanes: vi.fn().mockResolvedValue({ Darius: 'top' }),
+      getVersus: vi.fn().mockResolvedValue({ winRate: 52.5, games: 3000 }),
       ...overrides,
     },
     profiles: { getProfile: vi.fn().mockResolvedValue(profile), findProfile: vi.fn().mockResolvedValue(profile) },
+    live: {
+      getGame: vi.fn().mockResolvedValue({ queueId: 420, gameStartTime: 1, me: 'p', tier: 'gold_plus', allies: [], enemies: [] }),
+      getForm: vi.fn().mockResolvedValue({ games: 1, wins: 1, streak: 'W1', kda: 2, champGames: 1, champWins: 1 }),
+    },
     patch: vi.fn().mockResolvedValue({ patch: '26.19', notesUrl: 'https://example.test/notes', imageUrl: null }),
   };
 }
@@ -163,5 +168,48 @@ describe('API', () => {
     const res = await request(createApp(d)).get('/api/profile/Me/EUW');
     expect(res.status).toBe(502);
     expect(res.body).toEqual({ error: 'Data source unavailable' });
+  });
+
+it('returns the live game', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/live/Mr%20Noodle/EUW');
+    expect(res.status).toBe(200);
+    expect(d.live.getGame).toHaveBeenCalledWith('Mr Noodle', 'EUW');
+  });
+
+  it('says when the player is not in a game', async () => {
+    const d = deps();
+    vi.mocked(d.live.getGame).mockRejectedValue(new RiotError('not_in_game', 'Not in a game'));
+    const res = await request(createApp(d)).get('/api/live/Mr%20Noodle/EUW');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Mr Noodle#EUW is not in a game');
+  });
+
+  it('says when the live account does not exist', async () => {
+    const d = deps();
+    vi.mocked(d.live.getGame).mockRejectedValue(new RiotError('not_found', 'Not found'));
+    const res = await request(createApp(d)).get('/api/live/Nobody/EUW');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('No EUW account for Nobody#EUW');
+  });
+
+  it('returns a player form', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/live/form/abc?champ=103');
+    expect(res.status).toBe(200);
+    expect(d.live.getForm).toHaveBeenCalledWith('abc', 103);
+  });
+
+  it('rejects a form without a champion key', async () => {
+    const res = await request(createApp(deps())).get('/api/live/form/abc?champ=x');
+    expect(res.status).toBe(400);
+  });
+
+  it('returns one matchup win rate', async () => {
+    const d = deps();
+    const res = await request(createApp(d)).get('/api/versus?champ=darius&vs=malphite&lane=top');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ winRate: 52.5, games: 3000 });
+    expect(d.matchups.getVersus).toHaveBeenCalledWith(darius, malphite, 'top', 'platinum_plus');
   });
 });

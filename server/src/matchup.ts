@@ -1,4 +1,4 @@
-import type { Build, Champion, Counter, Item, Lane, MainLanesResponse, MatchupResponse, Tier, TierEntry, TierListResponse } from '@lol/shared';
+import type { Build, Champion, Counter, Item, Lane, MainLanesResponse, MatchupResponse, Tier, TierEntry, TierListResponse, VersusResponse } from '@lol/shared';
 import type { TtlCache } from './cache';
 import type { Provider, RawBuild, RawCounter } from './providers/types';
 
@@ -28,6 +28,15 @@ export class MatchupService {
       ]);
       const counters: Counter[] = this.enrichStats(raw).sort((a, b) => a.winRate - b.winRate).slice(0, COUNTERS_SHOWN);
       return { champion, lane, tier, counters, build: this.enrich(build) };
+    });
+  }
+
+  // your champion's win rate against one opponent
+  getVersus(champion: Champion, opponent: Champion, lane: Lane, tier: Tier): Promise<VersusResponse | null> {
+    return this.cache.getOrLoad(`versus:${champion.id}:${opponent.id}:${lane}:${tier}`, async () => {
+      const raw = await this.provider.getCounters(champion.id, lane, tier);
+      const hit = raw.find((c) => c.championKey === opponent.key && c.games >= this.minGames);
+      return hit ? { winRate: hit.winRate, games: hit.games } : null;
     });
   }
 
