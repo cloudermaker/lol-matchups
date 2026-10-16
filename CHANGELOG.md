@@ -31,3 +31,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: current patch notes link and highlights image on the homepage
 - chore: `npm run dev` starts API and site together
 - chore: dev server restarts when `.env` changes
+- chore: `npm run start -w server` and a Vercel rewrite for deployment
