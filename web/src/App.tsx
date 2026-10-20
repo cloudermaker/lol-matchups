@@ -138,6 +138,8 @@ export function App() {
 
   const open = (champ: string, lane: Lane) => navigate({ champ, player: null, tab: 'profile', lane, tier: route.tier });
   const openPlayer = (player: string) => navigate({ ...route, champ: null, player, tab: 'profile' });
+  // straight to the live tab: no profile load first
+  const openLive = (player: string) => navigate({ ...route, champ: null, player, tab: 'live' });
   const home: Route = { champ: null, player: null, tab: 'profile', lane: HOME_LANE, tier: route.tier };
   // the live tab needs the full Riot ID, from the URL or from the loaded profile
   const liveId = route.player && (parseRiotId(route.player) ? route.player : profile && profile.riotId.toLowerCase().startsWith(`${route.player.trim().toLowerCase()}#`) ? profile.riotId : null);
@@ -152,7 +154,7 @@ export function App() {
       </h1>
       {route.player ? (
         // remount on a new player so the box shows Riot's exact ID
-        <PlayerSearch key={profile?.riotId ?? route.player} initial={profile?.riotId ?? route.player} recent={recent} onSearch={openPlayer} />
+        <PlayerSearch key={profile?.riotId ?? route.player} initial={profile?.riotId ?? route.player} recent={recent} onSearch={openPlayer} onLive={openLive} />
       ) : (
         <div className="controls">
           <form className="field field-champ" onSubmit={search}>
@@ -185,7 +187,7 @@ export function App() {
         <LivePage riotId={liveId} onOpenChampion={(champ, lane) => navigate({ champ, player: null, tab: 'profile', lane, tier: route.tier })} />
       )}
       {!route.champ && !route.player && tierList && <TierList data={tierList} onOpen={(id) => open(id, tierList.lane)} />}
-      {!route.champ && !route.player && <PlayerSearch recent={recent} onSearch={openPlayer} />}
+      {!route.champ && !route.player && <PlayerSearch recent={recent} onSearch={openPlayer} onLive={openLive} />}
       {route.player && route.tab === 'profile' && profile && (
         <PlayerPage data={profile} onOpen={(champ, lane) => navigate({ champ, player: null, tab: 'profile', lane, tier: profile.tier })} />
       )}

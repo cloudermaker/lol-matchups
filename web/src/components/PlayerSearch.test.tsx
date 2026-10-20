@@ -42,6 +42,18 @@ describe('PlayerSearch', () => {
     expect(onSearch).toHaveBeenCalledWith('B#1234');
   });
 
+  it('opens the live game of a recent player', () => {
+    const onLive = vi.fn();
+    render(<PlayerSearch recent={['A#EUW', 'B#1234']} onSearch={vi.fn()} onLive={onLive} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Live game for B#1234' }));
+    expect(onLive).toHaveBeenCalledWith('B#1234');
+  });
+
+  it('has no live buttons without an onLive handler', () => {
+    setup(['A#EUW']);
+    expect(screen.queryByRole('button', { name: /Live game for/ })).not.toBeInTheDocument();
+  });
+
   it('hides the recent row when empty', () => {
     setup();
     expect(screen.queryByText('Recent')).not.toBeInTheDocument();

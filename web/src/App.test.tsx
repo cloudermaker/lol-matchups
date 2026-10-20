@@ -487,4 +487,15 @@ describe('live game tab', () => {
     expect(screen.queryByRole('button', { name: /Live game/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'This is me' })).not.toBeInTheDocument();
   });
+
+  it('opens the live game from a recent player on the homepage, without the profile', async () => {
+    localStorage.setItem('recentPlayers', JSON.stringify(['Me#EUW']));
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByRole('button', { name: 'Live game for Me#EUW' }));
+    await flush();
+    expect(window.location.search).toBe('?player=Me%23EUW&tab=live');
+    expect(api.fetchLiveGame).toHaveBeenCalledWith('Me', 'EUW');
+    expect(api.fetchProfile).not.toHaveBeenCalled();
+  });
 });

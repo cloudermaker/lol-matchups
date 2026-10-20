@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { parseRiotId } from '../riotId';
 
-interface Props { recent: string[]; onSearch(riotId: string): void; initial?: string }
+interface Props { recent: string[]; onSearch(riotId: string): void; onLive?(riotId: string): void; initial?: string }
 
-export function PlayerSearch({ recent, onSearch, initial = '' }: Props) {
+export function PlayerSearch({ recent, onSearch, onLive, initial = '' }: Props) {
   const [text, setText] = useState(initial);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,12 @@ export function PlayerSearch({ recent, onSearch, initial = '' }: Props) {
       {recent.length > 0 && (
         <div className="recent">
           <span className="field-label">Recent</span>
-          {recent.map((id) => <button key={id} onClick={() => onSearch(id)}>{id}</button>)}
+          {recent.map((id) => (
+            <span key={id} className="recent-player">
+              <button onClick={() => onSearch(id)}>{id}</button>
+              {onLive && <button className="live-link" aria-label={`Live game for ${id}`} title="Live game" onClick={() => onLive(id)}>Live</button>}
+            </span>
+          ))}
         </div>
       )}
     </section>

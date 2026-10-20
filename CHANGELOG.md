@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - feat: live game page with rank, mastery and recent form for all 10 players
 - feat: lane opponent panel with lolalytics matchup win rate
 - feat: Live game tab on the player page
+- feat: Live shortcut next to recent players
 - chore: `npm run start -w server` and a Vercel rewrite for deployment
 - chore: server runs as a Vercel Express function (bundled entry, /tmp match cache)
 

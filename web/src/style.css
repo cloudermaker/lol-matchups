@@ -62,3 +62,6 @@ button.live-card { cursor: pointer; }
 .live-opponent { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--accent); border-radius: 8px; background: var(--card); }
 @media (max-width: 600px) { .live-grid { grid-template-columns: 1fr; } }
 .tabs { margin: 16px 0; }
+.recent-player { display: inline-flex; }
+.recent-player .live-link { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; font-size: 0.85em; }
+.recent-player button:first-child:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }

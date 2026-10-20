@@ -2,7 +2,7 @@
 
 Pick a champion + lane → top 10 counters and recommended build (EUW, Gold+, Platinum+ or Emerald+).
 
-Live game: open a player, then the **Live game** tab during the loading screen (link: `?player=Name%23TAG&tab=live`). With a personal Riot key, the first load of a game can take up to ~2 min for the last cards; your lane opponent loads first.
+Live game: click **Live** next to a recent player, or open a player and its **Live game** tab, during the loading screen (link: `?player=Name%23TAG&tab=live`). With a personal Riot key, the first load of a game can take up to ~2 min for the last cards; your lane opponent loads first.
 
 ## Run
     cp .env.example .env
