@@ -438,29 +438,53 @@ describe('App', () => {
   });
 });
 
-describe('live game', () => {
-  it('saves me from the player page and shows the Live game button', async () => {
+describe('live game tab', () => {
+  const tab = (name: string) => screen.getByRole('button', { name });
+
+  it('opens the live game from the player page', async () => {
     window.history.replaceState(null, '', '/?player=Me%23EUW');
     render(<App />);
     await flush();
-    fireEvent.click(screen.getByRole('button', { name: 'This is me' }));
-    expect(localStorage.getItem('me')).toBe('Me#EUW');
-    expect(screen.getByText('This is you')).toBeInTheDocument();
-  });
-
-  it('opens the live page from the homepage', async () => {
-    localStorage.setItem('me', 'Me#EUW');
-    render(<App />);
+    fireEvent.click(tab('Live game'));
     await flush();
-    fireEvent.click(screen.getByRole('button', { name: 'Live game — Me#EUW' }));
-    await flush();
-    expect(window.location.search).toBe('?live=Me%23EUW');
+    expect(window.location.search).toBe('?player=Me%23EUW&tab=live');
     expect(api.fetchLiveGame).toHaveBeenCalledWith('Me', 'EUW');
   });
 
-  it('has no Live game button without me', async () => {
+  it('goes straight to the live game without loading the profile', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW&tab=live');
+    render(<App />);
+    await flush();
+    expect(api.fetchLiveGame).toHaveBeenCalledWith('Me', 'EUW');
+    expect(api.fetchProfile).not.toHaveBeenCalled();
+    expect(tab('Profile')).toBeInTheDocument();
+  });
+
+  it('loads the profile when switching back to the Profile tab', async () => {
+    window.history.replaceState(null, '', '/?player=Me%23EUW&tab=live');
+    render(<App />);
+    await flush();
+    fireEvent.click(tab('Profile'));
+    await flush();
+    expect(window.location.search).toBe('?player=Me%23EUW');
+    expect(api.fetchProfile).toHaveBeenCalledWith('Me', 'EUW');
+  });
+
+  it('resolves a name without a tag through the profile before the live game', async () => {
+    vi.mocked(api.fetchProfile).mockResolvedValue(profileFor('Me#EUW'));
+    window.history.replaceState(null, '', '/?player=Me&tab=live');
+    render(<App />);
+    await flush();
+    expect(api.fetchProfile).toHaveBeenCalledWith('Me');
+    expect(api.fetchLiveGame).toHaveBeenCalledWith('Me', 'EUW');
+    expect(window.location.search).toBe('?player=Me%23EUW&tab=live');
+  });
+
+  it('has no saved player or homepage live button', async () => {
+    localStorage.setItem('me', 'Me#EUW');
     render(<App />);
     await flush();
     expect(screen.queryByRole('button', { name: /Live game/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'This is me' })).not.toBeInTheDocument();
   });
 });

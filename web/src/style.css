@@ -61,3 +61,4 @@ button.live-card { cursor: pointer; }
 .skeleton { color: var(--muted); font-style: italic; }
 .live-opponent { margin-top: 16px; padding: 12px 16px; border: 1px solid var(--accent); border-radius: 8px; background: var(--card); }
 @media (max-width: 600px) { .live-grid { grid-template-columns: 1fr; } }
+.tabs { margin: 16px 0; }
